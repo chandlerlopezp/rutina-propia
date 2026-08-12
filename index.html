@@ -110,7 +110,7 @@
   <header class="top">
     <div class="weekbox">
       <div class="eyebrow">Programa propio — sin depender de nadie</div>
-      <h1>Semana <span id="weeknum">376</span></h1>
+      <h1>Semana <span id="weeknum">376</span> <button class="small" onclick="editWeekNumber()" style="vertical-align:middle;margin-left:8px;">Editar número</button></h1>
     </div>
     <div class="toprow-actions">
       <button class="small" onclick="downloadBackup()">Descargar backup</button>
@@ -483,6 +483,19 @@ function closeWeek(){
   saveState();
   render();
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function editWeekNumber(){
+  const input = prompt(`Número de semana actual: ${state.weekNumber}\n\nIngresá el nuevo número (esto no borra tu historial ni tus pesos, solo corrige la etiqueta):`, state.weekNumber);
+  if(input === null) return;
+  const parsed = parseInt(input);
+  if(isNaN(parsed) || parsed < 1){
+    alert('Ingresá un número válido.');
+    return;
+  }
+  state.weekNumber = parsed;
+  saveState();
+  render();
 }
 
 function markDeload(){
