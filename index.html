@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rutina Santiago</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1B1E1A; --surface:#242822; --surface-2:#2C312A;
+    --line: rgba(236,232,221,0.10); --line-strong: rgba(236,232,221,0.22);
+    --ink:#ECE8DD; --ink-dim:#A6A99C; --ink-faint:#787C71;
+    --mustard:#D9A62E; --mustard-dim: rgba(217,166,46,0.16);
+    --rust:#C1502E; --rust-dim: rgba(193,80,46,0.16);
+    --sage:#7C9464; --sage-dim: rgba(124,148,100,0.16);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 100px;}
+  h1,h2,h3{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.02em;margin:0;}
+  input{font-family:'IBM Plex Mono',monospace;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink);border-radius:3px;padding:8px 10px;font-size:14px;width:100%;}
+  input:focus{outline:none;border-color:var(--mustard);}
+  button{font-family:'Oswald',sans-serif;letter-spacing:0.02em;text-transform:uppercase;cursor:pointer;border-radius:3px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink-dim);padding:9px 14px;font-size:12.5px;transition:all .15s;}
+  button:hover{border-color:var(--mustard);color:var(--mustard);}
+  button.primary{background:var(--mustard-dim);border-color:var(--mustard);color:var(--mustard);font-weight:600;}
+  button.danger{border-color:var(--rust);color:var(--rust);}
+  button.small{padding:5px 10px;font-size:11px;}
+
+  header.top{padding:36px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;}
+  header.top .weekbox .eyebrow{font-family:'IBM Plex Mono',monospace;color:var(--mustard);font-size:11.5px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;}
+  header.top h1{font-size:32px;}
+  .toprow-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+  .banner{background:var(--rust-dim);border:1px solid var(--rust);border-radius:5px;padding:14px 16px;margin:20px 0;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+  .banner p{margin:0;font-size:13.5px;color:var(--ink);}
+  .banner p b{color:var(--rust);}
+
+  .maintabs{display:flex;gap:8px;margin:24px 0 0;flex-wrap:wrap;}
+  .maintabs button.tabbtn{flex:none;}
+  .maintabs button.tabbtn.active{background:var(--mustard-dim);border-color:var(--mustard);color:var(--mustard);}
+
+  .daynav{display:flex;gap:8px;margin:20px 0 0;flex-wrap:wrap;}
+  .daynav button{flex:1;min-width:130px;text-align:left;}
+  .daynav button .tag{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint);text-transform:none;letter-spacing:0;margin-top:2px;}
+  .daynav button.active{background:var(--mustard-dim);border-color:var(--mustard);color:var(--mustard);}
+  .daynav button.active .tag{color:var(--mustard);opacity:0.75;}
+
+  .panel{display:none;padding-top:28px;}
+  .panel.active{display:block;}
+
+  .exrow{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin-bottom:12px;}
+  .exhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;}
+  .exname{font-weight:600;font-size:15px;color:var(--ink);}
+  .exsub{display:block;color:var(--ink-faint);font-size:12px;margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+  .exbody{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end;}
+  .target-box .tlabel, .log-box label{display:block;font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
+  .target-box .tval{font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--sage);font-weight:600;}
+  .target-box .tval.pending{color:var(--ink-faint);font-size:13px;font-weight:400;}
+
+  .finisher-box{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--rust);border-radius:0 5px 5px 0;padding:16px 18px;margin:20px 0;}
+  .finisher-box .lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--rust);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+  .finisher-box p{margin:0;font-size:14px;color:var(--ink);}
+  .finisher-box small{color:var(--ink-faint);}
+
+  .closeweek{margin:32px 0;padding:20px;background:var(--surface);border:1px solid var(--mustard);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+  .closeweek p{margin:0;font-size:13px;color:var(--ink-dim);max-width:460px;}
+
+  details.histrow{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin-bottom:10px;padding:2px 18px;}
+  details.histrow summary{cursor:pointer;padding:14px 0;font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;}
+  details.histrow summary .badge-deload{font-family:'Inter',sans-serif;font-size:10.5px;background:var(--rust-dim);color:var(--rust);padding:2px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.03em;}
+  .histtable{width:100%;border-collapse:collapse;margin-bottom:14px;}
+  .histtable td{padding:7px 0;font-size:13px;color:var(--ink-dim);border-bottom:1px dashed var(--line);}
+  .histtable td:first-child{color:var(--ink);}
+  .histtable td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--sage);}
+  .histfin{font-size:12px;color:var(--ink-faint);margin:0 0 12px;}
+
+  footer.foot{padding:36px 0 0;border-top:1px solid var(--line);margin-top:20px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;}
+  footer.foot p{color:var(--ink-faint);font-size:12px;max-width:460px;margin:0;}
+  .hidden-file{display:none;}
+
+  .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;}
+  .stat-card .slabel{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;}
+  .stat-card .sval{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--ink);}
+  .stat-card .sval.up{color:var(--sage);}
+  .stat-card .sval.down{color:var(--rust);}
+  .stat-card .sdelta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-faint);margin-top:4px;}
+
+  .chart-block{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px 22px;margin-bottom:20px;}
+  .chart-block h3{font-family:'Inter',sans-serif;text-transform:none;font-size:15px;font-weight:600;color:var(--ink);letter-spacing:0;margin-bottom:4px;}
+  .chart-note{font-size:12.5px;color:var(--ink-faint);margin:0 0 16px;max-width:560px;}
+  .chart-block-split{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+
+  @media (max-width:800px){
+    .stat-cards{grid-template-columns:repeat(2,1fr);}
+    .chart-block-split{grid-template-columns:1fr;}
+  }
+
+  @media (max-width:640px){
+    .exbody{grid-template-columns:1fr;}
+    header.top h1{font-size:26px;}
+    .daynav button{min-width:100px;font-size:11px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="weekbox">
+      <div class="eyebrow">Programa propio — sin depender de nadie</div>
+      <h1>Semana <span id="weeknum">376</span></h1>
+    </div>
+    <div class="toprow-actions">
+      <button class="small" onclick="downloadBackup()">Descargar backup</button>
+      <button class="small" onclick="document.getElementById('fileInput').click()">Restaurar backup</button>
+      <input type="file" id="fileInput" class="hidden-file" accept="application/json" onchange="restoreBackup(event)">
+      <button class="small danger" onclick="resetApp()">Reiniciar app</button>
+    </div>
+  </header>
+
+  <div id="deloadBanner"></div>
+
+  <div class="maintabs">
+    <button class="tabbtn active" onclick="showMain('rutina', this)">Rutina de esta semana</button>
+    <button class="tabbtn" onclick="showMain('historial', this)">Historial</button>
+    <button class="tabbtn" onclick="showMain('estadisticas', this)">Estadísticas</button>
+  </div>
+
+  <div id="panel-rutina" class="panel active">
+    <div class="daynav">
+      <button class="active" onclick="showDay(1,this)">Día 1<span class="tag">Cuádriceps</span></button>
+      <button onclick="showDay(2,this)">Día 2<span class="tag">Empuje sup.</span></button>
+      <button onclick="showDay(3,this)">Día 3<span class="tag">Bisagra / posterior</span></button>
+      <button onclick="showDay(4,this)">Día 4<span class="tag">Tracción sup.</span></button>
+    </div>
+    <div id="daysMount"></div>
+
+    <div class="closeweek">
+      <p>Cuando termines de entrenar y anotar los pesos/reps logrados de los 4 días, cerrá la semana. La app calcula sola los objetivos de la semana que viene para cada ejercicio.</p>
+      <button class="primary" onclick="closeWeek()">Cerrar semana y generar la próxima</button>
+    </div>
+  </div>
+
+  <div id="panel-historial" class="panel">
+    <div id="histMount"></div>
+  </div>
+
+  <div id="panel-estadisticas" class="panel">
+    <div id="statsEmpty" style="display:none;">
+      <p style="color:var(--ink-dim);font-size:14px;padding:24px 0;">Todavía no hay datos para graficar. Cerrá al menos una semana desde la pestaña "Rutina de esta semana" y volvé acá.</p>
+    </div>
+    <div id="statsContent">
+      <div class="stat-cards" id="statCards"></div>
+
+      <div class="chart-block">
+        <h3>Volumen total por semana</h3>
+        <p class="chart-note">Volumen = peso × reps × series, sumado en todos los ejercicios con peso. Los isométricos (plancha) no entran en volumen.</p>
+        <canvas id="chartVolumeTotal" height="110"></canvas>
+      </div>
+
+      <div class="chart-block">
+        <h3>Volumen por grupo muscular</h3>
+        <p class="chart-note">Cada barra es una semana, apilada por grupo muscular. Sirve para ver si algún grupo se está quedando atrás en volumen real.</p>
+        <canvas id="chartVolumeMuscle" height="130"></canvas>
+      </div>
+
+      <div class="chart-block">
+        <h3>Reps totales por semana</h3>
+        <p class="chart-note">Suma de reps × series en toda la semana, sin ponderar por peso. Es un buen proxy de densidad/fatiga acumulada.</p>
+        <canvas id="chartReps" height="110"></canvas>
+      </div>
+
+      <div class="chart-block">
+        <h3>Progresión de tus levantamientos principales</h3>
+        <p class="chart-note">Peso logrado semana a semana en los 4 movimientos de fuerza más pesados del programa.</p>
+        <canvas id="chartMainLifts" height="110"></canvas>
+      </div>
+
+      <div class="chart-block chart-block-split">
+        <div>
+          <h3>Reparto de volumen acumulado</h3>
+          <p class="chart-note">De todo lo que entrenaste hasta ahora, cómo se distribuye entre grupos musculares.</p>
+          <canvas id="chartMuscleShare" height="220"></canvas>
+        </div>
+        <div>
+          <h3>Semanas sin descarga</h3>
+          <p class="chart-note">Cada punto es una semana. Las barras rojas marcan las descargas — te ayuda a ver si venís respetando el ritmo de cada 8-10 semanas.</p>
+          <canvas id="chartDeloadTimeline" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <p>Los datos se guardan en este navegador (localStorage). Si cambiás de celular o de navegador, usá "Descargar backup" antes y "Restaurar backup" del otro lado para no perder el historial.</p>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+const STORAGE_KEY = 'rutina-santiago-v1';
+
+function defaultState(){
+  return {
+    weekNumber: 376,
+    startWeek: 376,
+    lastDeloadWeek: null,
+    deloadDue: false,
+    pendingDeload: false,
+    currentFinishers: { day2: pickRandom(FINISHER_POOLS.day2), day4: pickRandom(FINISHER_POOLS.day4) },
+    finisherHistory: { day2: [], day4: [] },
+    history: [],
+    days: [
+      { id:1, title:'Día 1', pattern:'Cuádriceps', exercises:[
+        ex('d1e1','Sentadilla','1x5 + 2x4 (top set)','weight',4,6,5,160,6,['Sentadilla frontal','Prensa 45°','Hack squat'],'Cuádriceps',3),
+        ex('d1e2','Sentadilla búlgara','3 x 8-12','weight',8,12,2.5,30,10,['Zancada caminando','Step-up con peso'],'Cuádriceps',3),
+        ex('d1e3','Goblet squat','1x12 + 1x10','weight',10,12,2.5,40,12,[],'Cuádriceps',2),
+        ex('d1e4','Extensión de cuádriceps','2 x 12','unregistered',10,12,2.5,null,null,[],'Cuádriceps',2),
+        ex('d1e5','Peso muerto rumano','1x12 + 1x10','weight',10,13,5,100,13,['Good morning barra baja','Peso muerto rumano a 1 pierna'],'Isquios / glúteo',2),
+        ex('d1e6','Buenos días','1x14 + 1x12','weight',12,14,2.5,80,14,[],'Isquios / glúteo',2),
+      ]},
+      { id:2, title:'Día 2', pattern:'Empuje superior', exercises:[
+        ex('d2e1','Press banca','3 x 5','weight',5,6,2.5,107.5,5,['Press banca mancuernas','Press banca inclinado'],'Pecho',3),
+        ex('d2e2','Remo landmine','2x12 + 1x10','weight',10,14,2.5,55,14,[],'Espalda',3),
+        ex('d2e3','Pullover en polea','1x14 + 1x12','weight',12,14,2.5,45,14,[],'Espalda',2),
+        ex('d2e4','Press cerrado (close grip)','2 x 12','weight',12,14,2.5,80,14,['Fondos lastrados','Press francés barra Z'],'Brazos',2),
+        ex('d2e5','Aperturas con mancuernas','1x14 + 1x12','weight',12,14,1.25,22.5,12,[],'Pecho',2),
+        ex('d2e6','Elevaciones laterales en polea','3 x 15','weight',15,15,1,5,15,['Elevación con mancuerna','Elevación en máquina'],'Hombro',3),
+        ex('d2e7','Curl con barra recta','1x12 + 1x10','weight',10,14,2.5,45,14,[],'Brazos',2),
+      ]},
+      { id:3, title:'Día 3', pattern:'Bisagra / posterior', exercises:[
+        ex('d3e1','Peso muerto','1x5 + 2x4 (top set)','weight',4,6,5,170,6,['Peso muerto sumo','Peso muerto déficit','Peso muerto a la trampa'],'Isquios / glúteo',3),
+        ex('d3e2','Hip thrust','2x6 + 2x12','weight',6,8,5,190,8,['Hip thrust a 1 pierna','Puente de glúteo pausado'],'Isquios / glúteo',4),
+        ex('d3e3','Curl femoral','2 x 12','unregistered',10,12,2.5,null,null,[],'Isquios / glúteo',2),
+        ex('d3e4','Estocada hacia atrás','2 x 10','weight',10,12,2.5,80,12,['Estocada búlgara foco isquio','Peso muerto rumano a 1 pierna'],'Isquios / glúteo',2),
+        ex('d3e5','Elevación de gemelo a 1 pierna','2x12 + 1x15 (peso corp.)','weight',10,12,2,14,10,[],'Pantorrilla',3),
+        ex('d3e6','Plancha frontal','3 x tiempo','time',null,null,5,30,null,[],'Core',3),
+      ]},
+      { id:4, title:'Día 4', pattern:'Tracción superior', exercises:[
+        ex('d4e1','Dorsalera a 1 mano','1x14 + 2x12','weight',12,16,2.5,55,16,['Jalón al pecho agarre neutro','Dominadas asistidas'],'Espalda',3),
+        ex('d4e2','Press militar','3 x 8','weight',8,9,2.5,57.5,8,['Press militar mancuernas','Press Arnold'],'Hombro',3),
+        ex('d4e3','Remo con barra','1x6+1x5+1x4 (descendente)','weight',4,7,5,100,7,['Remo en T','Remo Pendlay'],'Espalda',3),
+        ex('d4e4','Remo en polea a 1 mano','1x10 + 1x8','weight',8,12,2.5,40,12,[],'Espalda',2),
+        ex('d4e5','Skull crusher','2 x 10','weight',10,12,2.5,35,12,[],'Brazos',2),
+        ex('d4e6','Extensión unilateral en polea','2 x 12','weight',12,14,2.5,25,12,[],'Brazos',2),
+      ]},
+    ]
+  };
+}
+
+function ex(id,baseName,scheme,type,repFloor,repCeiling,weightStep,currentWeight,currentRepTarget,variants,muscle,sets){
+  return {id, baseName, name:baseName, scheme, type, repFloor, repCeiling, weightStep, currentWeight, currentRepTarget, variants: variants||[], muscle, sets};
+}
+
+const MUSCLE_COLORS = {
+  'Cuádriceps': '#D9A62E',
+  'Isquios / glúteo': '#C1502E',
+  'Pecho': '#7C9464',
+  'Espalda': '#4E7A8C',
+  'Hombro': '#9B6B9E',
+  'Brazos': '#B98B4E',
+  'Pantorrilla': '#6E6E58',
+  'Core': '#8C7355',
+  'Otro': '#787C71'
+};
+
+const FINISHER_POOLS = {
+  day2: [
+    "EMOM 12' — min1: 12 push ups · min2: 20 goblet squat [16kg] · min3: 24 jumping lunges",
+    "AMRAP 12' — 3 burpees / 6 sit ups / 9 air squat",
+    "3 rondas: 400m trote + 12 burpees + 25 sit ups",
+    "21-15-9: burpees / KB swing [16kg] / sit ups",
+    "Tabata 8x20\"/10\" en bici o remo",
+    "EMOM 16' rotando 4 ejercicios cortos"
+  ],
+  day4: [
+    "21-15-9: burpees / KB swing [16kg] / sit ups",
+    "A completar: 60 KB swing [16kg] / 50 push ups / 40 sit ups / 30 burpees / 200 jumping jacks",
+    "EMOM 12' — goblet squat + walking lunges + sit ups + plancha",
+    "5 rondas cortas: 10 burpees + 15 air squat",
+    "Chipper acumulativo: 100-80-60-40-20 (air squat / sit ups / estocadas / push ups / burpees)"
+  ]
+};
+
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function pickFinisher(dayKey, state){
+  const pool = FINISHER_POOLS[dayKey];
+  const recent = state.finisherHistory[dayKey] || [];
+  let candidates = pool.filter(f => !recent.includes(f));
+  if(candidates.length === 0) candidates = pool.filter(f => f !== recent[recent.length-1]);
+  if(candidates.length === 0) candidates = pool;
+  const chosen = pickRandom(candidates);
+  recent.push(chosen);
+  if(recent.length > 2) recent.shift();
+  state.finisherHistory[dayKey] = recent;
+  return chosen;
+}
+
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.days) return defaultState();
+    return parsed;
+  }catch(e){
+    console.error('Error cargando estado, se usa el default', e);
+    return defaultState();
+  }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    console.error('No se pudo guardar', e);
+    alert('No se pudo guardar el progreso en este navegador. Descargá un backup para no perder los datos.');
+  }
+}
+
+function round(n, step){
+  const precision = step < 1 ? 100 : 2;
+  return Math.round(n*precision)/precision;
+}
+
+function targetText(exr){
+  if(exr.type === 'unregistered'){
+    return {text:'Sin definir — anotá el peso de la máquina', pending:true};
+  }
+  if(exr.type === 'time'){
+    return {text: (exr.currentWeight ?? '—') + ' seg × 3', pending:false};
+  }
+  return {text: (exr.currentWeight ?? '—') + ' kg × ' + (exr.currentRepTarget ?? '—'), pending:false};
+}
+
+function renderDays(){
+  const mount = document.getElementById('daysMount');
+  mount.innerHTML = state.days.map(day => {
+    const finisherHtml = (day.id === 2 || day.id === 4)
+      ? `<div class="finisher-box"><div class="lbl">Finisher metabólico de esta semana</div><p>${state.currentFinishers['day'+day.id]}</p><small>La app elige un formato distinto al de las últimas 2 semanas. No hace falta que lo definas.</small></div>`
+      : '';
+    const rows = day.exercises.map(exr => {
+      const t = targetText(exr);
+      const variantBtn = exr.variants.length
+        ? `<button class="small" onclick="rotateVariant('${exr.id}')">Cambiar ejercicio</button>`
+        : '';
+      let inputs;
+      if(exr.type === 'time'){
+        inputs = `<div class="log-box"><label>Segundos logrados<input type="number" id="w-${exr.id}" value="${exr.currentWeight ?? ''}"></label></div>`;
+      } else {
+        inputs = `<div class="log-box" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label>Peso usado (kg)<input type="number" step="0.5" id="w-${exr.id}" value="${exr.currentWeight ?? ''}"></label>
+          <label>Reps logradas<input type="number" id="r-${exr.id}" value="${exr.currentRepTarget ?? ''}"></label>
+        </div>`;
+      }
+      return `<div class="exrow" id="row-${exr.id}">
+        <div class="exhead">
+          <div><span class="exname">${exr.name}</span><span class="exsub">${exr.scheme}</span></div>
+          ${variantBtn}
+        </div>
+        <div class="exbody">
+          <div class="target-box"><div class="tlabel">Objetivo esta semana</div><div class="tval ${t.pending?'pending':''}">${t.text}</div></div>
+          ${inputs}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="dayblock" data-day="${day.id}" style="display:${day.id===1?'block':'none'}">
+      <h2 style="font-size:20px;margin-bottom:16px;">${day.title} <span style="color:var(--ink-faint);font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:none;">— ${day.pattern}</span></h2>
+      ${rows}
+      ${finisherHtml}
+    </div>`;
+  }).join('');
+}
+
+function showDay(n, btn){
+  document.querySelectorAll('.dayblock').forEach(d => d.style.display = (d.dataset.day === String(n)) ? 'block' : 'none');
+  document.querySelectorAll('.daynav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function showMain(name, btn){
+  document.querySelectorAll('.maintabs .tabbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-rutina').classList.toggle('active', name==='rutina');
+  document.getElementById('panel-historial').classList.toggle('active', name==='historial');
+  document.getElementById('panel-estadisticas').classList.toggle('active', name==='estadisticas');
+  if(name === 'historial') renderHistory();
+  if(name === 'estadisticas') renderStats();
+}
+
+function findExercise(id){
+  for(const day of state.days){
+    const found = day.exercises.find(e => e.id === id);
+    if(found) return found;
+  }
+  return null;
+}
+
+function rotateVariant(id){
+  const exr = findExercise(id);
+  if(!exr) return;
+  const allNames = [exr.baseName, ...exr.variants];
+  const currentPos = allNames.indexOf(exr.name);
+  const nextPos = (currentPos + 1) % allNames.length;
+  const newName = allNames[nextPos];
+  const label = exr.type === 'time' ? 'segundos' : 'kg';
+  const input = prompt(`Vas a pasar "${exr.name}" a "${newName}".\n\nComo no hay historial de este ejercicio, ingresá el peso/tiempo inicial (${label}):`, '');
+  if(input === null) return;
+  const parsed = parseFloat(input.replace(',', '.'));
+  exr.name = newName;
+  exr.currentWeight = isNaN(parsed) ? null : parsed;
+  exr.currentRepTarget = exr.type === 'time' ? null : exr.repFloor;
+  exr.type = (exr.type === 'unregistered') ? 'unregistered' : exr.type;
+  saveState();
+  renderDays();
+}
+
+function computeNextStep(exr, loggedWeight, loggedReps){
+  if(exr.type === 'time'){
+    if(loggedWeight == null || isNaN(loggedWeight)) return { weight: exr.currentWeight, repTarget: null };
+    if(loggedWeight >= exr.currentWeight){
+      return { weight: loggedWeight + exr.weightStep, repTarget: null };
+    }
+    return { weight: exr.currentWeight, repTarget: null };
+  }
+  if(loggedWeight == null || isNaN(loggedWeight) || loggedReps == null || isNaN(loggedReps)){
+    return { weight: exr.currentWeight, repTarget: exr.currentRepTarget };
+  }
+  if(loggedReps >= exr.repCeiling){
+    return { weight: round(loggedWeight + exr.weightStep, exr.weightStep), repTarget: exr.repFloor };
+  }
+  return { weight: loggedWeight, repTarget: Math.min(loggedReps + 1, exr.repCeiling) };
+}
+
+function closeWeek(){
+  const entries = {};
+  state.days.forEach(day => {
+    day.exercises.forEach(exr => {
+      const wInput = document.getElementById('w-'+exr.id);
+      const rInput = document.getElementById('r-'+exr.id);
+      const loggedWeight = wInput && wInput.value !== '' ? parseFloat(wInput.value) : null;
+      const loggedReps = (exr.type !== 'time' && rInput && rInput.value !== '') ? parseInt(rInput.value) : null;
+      entries[exr.id] = { name: exr.name, weight: loggedWeight, reps: loggedReps, type: exr.type, muscle: exr.muscle, sets: exr.sets };
+
+      if(exr.type === 'unregistered'){
+        if(loggedWeight != null){
+          exr.type = 'weight';
+          exr.currentWeight = loggedWeight;
+          exr.currentRepTarget = loggedReps != null ? Math.min(loggedReps+1, exr.repCeiling) : exr.repFloor;
+        }
+      } else {
+        const next = computeNextStep(exr, loggedWeight, loggedReps);
+        exr.currentWeight = next.weight;
+        exr.currentRepTarget = next.repTarget;
+      }
+    });
+  });
+
+  state.history.push({
+    weekNumber: state.weekNumber,
+    date: new Date().toLocaleDateString('es-AR'),
+    deload: state.pendingDeload,
+    entries,
+    finishers: { day2: state.currentFinishers.day2, day4: state.currentFinishers.day4 }
+  });
+
+  if(state.pendingDeload){
+    state.lastDeloadWeek = state.weekNumber;
+  }
+  state.pendingDeload = false;
+  state.weekNumber += 1;
+  state.currentFinishers = { day2: pickFinisher('day2', state), day4: pickFinisher('day4', state) };
+
+  const weeksSinceDeload = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
+  state.deloadDue = weeksSinceDeload >= 8;
+
+  saveState();
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function markDeload(){
+  state.pendingDeload = true;
+  state.days.forEach(day => {
+    day.exercises.forEach(exr => {
+      if(exr.type === 'weight' && exr.currentWeight != null){
+        const wInput = document.getElementById('w-'+exr.id);
+        const rInput = document.getElementById('r-'+exr.id);
+        if(wInput) wInput.value = round(exr.currentWeight * 0.85, exr.weightStep);
+        if(rInput) rInput.value = exr.repFloor;
+      }
+      if(exr.type === 'time' && exr.currentWeight != null){
+        const wInput = document.getElementById('w-'+exr.id);
+        if(wInput) wInput.value = Math.max(10, exr.currentWeight - 10);
+      }
+    });
+  });
+  renderDeloadBanner();
+}
+
+function renderDeloadBanner(){
+  const mount = document.getElementById('deloadBanner');
+  if(!state.deloadDue){ mount.innerHTML = ''; return; }
+  if(state.pendingDeload){
+    mount.innerHTML = `<div class="banner"><p>Esta semana está marcada como <b>descarga</b>. Los pesos de arriba ya se ajustaron ~15% abajo — entrená con eso y cerrá la semana normal.</p></div>`;
+    return;
+  }
+  const weeksSince = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
+  mount.innerHTML = `<div class="banner"><p>Llevás <b>${weeksSince} semanas</b> sin descarga. Si te sentís cargado, marcá esta semana como descarga antes de entrenar.</p><button class="small" onclick="markDeload()">Marcar esta semana como descarga</button></div>`;
+}
+
+function renderHistory(){
+  const mount = document.getElementById('histMount');
+  if(state.history.length === 0){
+    mount.innerHTML = `<p style="color:var(--ink-dim);font-size:14px;padding:24px 0;">Todavía no cerraste ninguna semana. Cuando cierres la primera, va a aparecer acá.</p>`;
+    return;
+  }
+  const nameById = {};
+  state.days.forEach(d => d.exercises.forEach(e => nameById[e.id] = e.baseName));
+  mount.innerHTML = state.history.slice().reverse().map(week => {
+    const rows = Object.entries(week.entries).filter(([,v]) => v.weight != null).map(([id, v]) => {
+      const label = v.type === 'time' ? `${v.weight} seg` : `${v.weight} kg${v.reps!=null?(' × '+v.reps):''}`;
+      return `<tr><td>${v.name}</td><td>${label}</td></tr>`;
+    }).join('');
+    return `<details class="histrow">
+      <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?'<span class="badge-deload">Descarga</span>':''}</summary>
+      <p class="histfin">Finisher día 2: ${week.finishers.day2} · Finisher día 4: ${week.finishers.day4}</p>
+      <table class="histtable">${rows}</table>
+    </details>`;
+  }).join('');
+}
+
+function downloadBackup(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rutina-santiago-semana-${state.weekNumber}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function restoreBackup(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!parsed.days) throw new Error('Formato inválido');
+      state = parsed;
+      saveState();
+      render();
+      alert('Backup restaurado correctamente.');
+    }catch(err){
+      alert('No se pudo leer ese archivo como backup válido.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetApp(){
+  if(!confirm('Esto borra todo el progreso guardado en este navegador (pesos, historial). ¿Descargaste un backup antes? Esta acción no se puede deshacer.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = defaultState();
+  render();
+}
+
+const MAIN_LIFTS = [
+  {id:'d1e1', label:'Sentadilla'},
+  {id:'d3e1', label:'Peso muerto'},
+  {id:'d2e1', label:'Press banca'},
+  {id:'d4e2', label:'Press militar'}
+];
+
+const charts = {};
+
+function computeStats(){
+  const weeks = state.history; // ya está en orden cronológico
+  const perWeek = weeks.map(week => {
+    let totalVolume = 0, totalReps = 0;
+    const muscleVolume = {};
+    Object.values(week.entries).forEach(entry => {
+      if(entry.type === 'time') return;
+      if(entry.weight == null || entry.reps == null) return;
+      const sets = entry.sets || 1;
+      const vol = entry.weight * entry.reps * sets;
+      totalVolume += vol;
+      totalReps += entry.reps * sets;
+      const m = entry.muscle || 'Otro';
+      muscleVolume[m] = (muscleVolume[m] || 0) + vol;
+    });
+    return { weekNumber: week.weekNumber, deload: week.deload, totalVolume, totalReps, muscleVolume, entries: week.entries };
+  });
+
+  const muscleGroups = Object.keys(MUSCLE_COLORS).filter(m => m !== 'Otro' &&
+    perWeek.some(w => w.muscleVolume[m] > 0));
+
+  const muscleShareTotal = {};
+  perWeek.forEach(w => {
+    Object.entries(w.muscleVolume).forEach(([m,v]) => {
+      muscleShareTotal[m] = (muscleShareTotal[m] || 0) + v;
+    });
+  });
+
+  const mainLiftsSeries = MAIN_LIFTS.map(lift => ({
+    label: lift.label,
+    data: perWeek.map(w => (w.entries[lift.id] && w.entries[lift.id].weight != null) ? w.entries[lift.id].weight : null)
+  }));
+
+  return { perWeek, muscleGroups, muscleShareTotal, mainLiftsSeries };
+}
+
+function fmtKg(n){ return Math.round(n).toLocaleString('es-AR'); }
+
+function renderStatCards(stats){
+  const perWeek = stats.perWeek;
+  const mount = document.getElementById('statCards');
+  if(perWeek.length === 0){ mount.innerHTML=''; return; }
+  const last = perWeek[perWeek.length-1];
+  const avgVolume = perWeek.reduce((a,w)=>a+w.totalVolume,0) / perWeek.length;
+  const delta = avgVolume > 0 ? ((last.totalVolume - avgVolume) / avgVolume * 100) : 0;
+  const weeksSinceDeload = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
+  const deloadCount = perWeek.filter(w => w.deload).length;
+
+  mount.innerHTML = `
+    <div class="stat-card"><div class="slabel">Semanas registradas</div><div class="sval">${perWeek.length}</div></div>
+    <div class="stat-card"><div class="slabel">Volumen última semana</div><div class="sval">${fmtKg(last.totalVolume)} kg</div></div>
+    <div class="stat-card"><div class="slabel">Vs. tu promedio</div><div class="sval ${delta>=0?'up':'down'}">${delta>=0?'+':''}${delta.toFixed(0)}%</div></div>
+    <div class="stat-card"><div class="slabel">Racha sin descarga</div><div class="sval">${weeksSinceDeload} sem.</div><div class="sdelta">${deloadCount} descargas en total</div></div>
+  `;
+}
+
+function destroyChart(key){
+  if(charts[key]){ charts[key].destroy(); delete charts[key]; }
+}
+
+const CHART_BASE = {
+  responsive:true,
+  plugins:{ legend:{ labels:{ color:'#A6A99C', font:{family:'Inter'} } } },
+  scales:{
+    x:{ ticks:{ color:'#787C71' }, grid:{ color:'rgba(236,232,221,0.06)' } },
+    y:{ ticks:{ color:'#787C71' }, grid:{ color:'rgba(236,232,221,0.06)' } }
+  }
+};
+
+function renderStats(){
+  const stats = computeStats();
+  const hasData = stats.perWeek.length > 0;
+  document.getElementById('statsEmpty').style.display = hasData ? 'none' : 'block';
+  document.getElementById('statsContent').style.display = hasData ? 'block' : 'none';
+  if(!hasData) return;
+
+  renderStatCards(stats);
+  const labels = stats.perWeek.map(w => 'S'+w.weekNumber);
+
+  destroyChart('volumeTotal');
+  charts.volumeTotal = new Chart(document.getElementById('chartVolumeTotal'), {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Volumen total (kg)', data: stats.perWeek.map(w=>Math.round(w.totalVolume)), borderColor:'#D9A62E', backgroundColor:'rgba(217,166,46,0.12)', fill:true, tension:0.3 }] },
+    options: CHART_BASE
+  });
+
+  destroyChart('volumeMuscle');
+  charts.volumeMuscle = new Chart(document.getElementById('chartVolumeMuscle'), {
+    type:'bar',
+    data:{ labels, datasets: stats.muscleGroups.map(m => ({
+      label:m, data: stats.perWeek.map(w => Math.round(w.muscleVolume[m]||0)), backgroundColor: MUSCLE_COLORS[m]
+    })) },
+    options:{ ...CHART_BASE, scales:{ x:{...CHART_BASE.scales.x, stacked:true}, y:{...CHART_BASE.scales.y, stacked:true} } }
+  });
+
+  destroyChart('reps');
+  charts.reps = new Chart(document.getElementById('chartReps'), {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Reps totales', data: stats.perWeek.map(w=>w.totalReps), borderColor:'#7C9464', backgroundColor:'rgba(124,148,100,0.12)', fill:true, tension:0.3 }] },
+    options: CHART_BASE
+  });
+
+  destroyChart('mainLifts');
+  const liftColors = ['#D9A62E','#C1502E','#4E7A8C','#9B6B9E'];
+  charts.mainLifts = new Chart(document.getElementById('chartMainLifts'), {
+    type:'line',
+    data:{ labels, datasets: stats.mainLiftsSeries.map((s,i) => ({
+      label:s.label, data:s.data, borderColor:liftColors[i], backgroundColor:liftColors[i], spanGaps:true, tension:0.2
+    })) },
+    options: CHART_BASE
+  });
+
+  destroyChart('muscleShare');
+  const shareLabels = Object.keys(stats.muscleShareTotal);
+  charts.muscleShare = new Chart(document.getElementById('chartMuscleShare'), {
+    type:'doughnut',
+    data:{ labels: shareLabels, datasets:[{ data: shareLabels.map(m=>Math.round(stats.muscleShareTotal[m])), backgroundColor: shareLabels.map(m=>MUSCLE_COLORS[m]) }] },
+    options:{ plugins:{ legend:{ position:'bottom', labels:{ color:'#A6A99C', font:{family:'Inter'} } } } }
+  });
+
+  destroyChart('deloadTimeline');
+  charts.deloadTimeline = new Chart(document.getElementById('chartDeloadTimeline'), {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Volumen (kg)', data: stats.perWeek.map(w=>Math.round(w.totalVolume)),
+      backgroundColor: stats.perWeek.map(w => w.deload ? '#C1502E' : '#D9A62E') }] },
+    options: CHART_BASE
+  });
+}
+
+function render(){
+  document.getElementById('weeknum').textContent = state.weekNumber;
+  renderDeloadBanner();
+  renderDays();
+  if(document.getElementById('panel-historial').classList.contains('active')) renderHistory();
+  if(document.getElementById('panel-estadisticas').classList.contains('active')) renderStats();
+}
+
+render();
+</script>
+</body>
+</html>
