@@ -91,6 +91,8 @@
   .chart-block h3{font-family:'Inter',sans-serif;text-transform:none;font-size:15px;font-weight:600;color:var(--ink);letter-spacing:0;margin-bottom:4px;}
   .chart-note{font-size:12.5px;color:var(--ink-faint);margin:0 0 16px;max-width:560px;}
   .chart-block-split{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .chart-block canvas{max-height:280px;}
+  .chart-error{color:var(--rust);font-size:13px;padding:12px 0;}
 
   @media (max-width:800px){
     .stat-cards{grid-template-columns:repeat(2,1fr);}
@@ -199,7 +201,7 @@
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 const STORAGE_KEY = 'rutina-santiago-v1';
 
@@ -659,6 +661,7 @@ function destroyChart(key){
 
 const CHART_BASE = {
   responsive:true,
+  maintainAspectRatio:false,
   plugins:{ legend:{ labels:{ color:'#A6A99C', font:{family:'Inter'} } } },
   scales:{
     x:{ ticks:{ color:'#787C71' }, grid:{ color:'rgba(236,232,221,0.06)' } },
@@ -667,6 +670,12 @@ const CHART_BASE = {
 };
 
 function renderStats(){
+  if(typeof Chart === 'undefined'){
+    document.getElementById('statsEmpty').style.display = 'none';
+    document.getElementById('statsContent').innerHTML = '<p class="chart-error">No se pudo cargar la librería de gráficos (Chart.js) desde el CDN. Revisá tu conexión a internet y recargá la página. El resto de la app (rutina e historial) funciona igual sin esto.</p>';
+    document.getElementById('statsContent').style.display = 'block';
+    return;
+  }
   const stats = computeStats();
   const hasData = stats.perWeek.length > 0;
   document.getElementById('statsEmpty').style.display = hasData ? 'none' : 'block';
