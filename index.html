@@ -8,20 +8,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#1B1E1A; --surface:#242822; --surface-2:#2C312A;
-    --line: rgba(236,232,221,0.10); --line-strong: rgba(236,232,221,0.22);
-    --ink:#ECE8DD; --ink-dim:#A6A99C; --ink-faint:#787C71;
-    --mustard:#D9A62E; --mustard-dim: rgba(217,166,46,0.16);
-    --rust:#C1502E; --rust-dim: rgba(193,80,46,0.16);
-    --sage:#7C9464; --sage-dim: rgba(124,148,100,0.16);
+    --bg:#0B0C0D; --surface:#131416; --surface-2:#1B1D20;
+    --line: rgba(255,255,255,0.07); --line-strong: rgba(255,255,255,0.16);
+    --ink:#F5F5F4; --ink-dim:#9CA0A6; --ink-faint:#6B6F76;
+    --mustard:#F5A623; --mustard-dim: rgba(245,166,35,0.14);
+    --rust:#E5484D; --rust-dim: rgba(229,72,77,0.14);
+    --sage:#22C55E; --sage-dim: rgba(34,197,94,0.14);
+    --blue:#3B82F6; --blue-dim: rgba(59,130,246,0.14);
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;}
   .wrap{max-width:920px;margin:0 auto;padding:0 20px 100px;}
   h1,h2,h3{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.02em;margin:0;}
-  input{font-family:'IBM Plex Mono',monospace;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink);border-radius:3px;padding:8px 10px;font-size:14px;width:100%;}
+  input{font-family:'IBM Plex Mono',monospace;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink);border-radius:5px;padding:8px 10px;font-size:14px;width:100%;}
   input:focus{outline:none;border-color:var(--mustard);}
-  button{font-family:'Oswald',sans-serif;letter-spacing:0.02em;text-transform:uppercase;cursor:pointer;border-radius:3px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink-dim);padding:9px 14px;font-size:12.5px;transition:all .15s;}
+  button{font-family:'Oswald',sans-serif;letter-spacing:0.02em;text-transform:uppercase;cursor:pointer;border-radius:5px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink-dim);padding:9px 14px;font-size:12.5px;transition:all .15s;}
   button:hover{border-color:var(--mustard);color:var(--mustard);}
   button.primary{background:var(--mustard-dim);border-color:var(--mustard);color:var(--mustard);font-weight:600;}
   button.danger{border-color:var(--rust);color:var(--rust);}
@@ -32,41 +33,64 @@
   header.top h1{font-size:32px;}
   .toprow-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 
-  .banner{background:var(--rust-dim);border:1px solid var(--rust);border-radius:5px;padding:14px 16px;margin:20px 0;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+  .banner{background:var(--rust-dim);border:1px solid var(--rust);border-radius:8px;padding:14px 16px;margin:20px 0;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
   .banner p{margin:0;font-size:13.5px;color:var(--ink);}
   .banner p b{color:var(--rust);}
 
   .maintabs{display:flex;gap:8px;margin:24px 0 0;flex-wrap:wrap;}
-  .maintabs button.tabbtn{flex:none;}
+  .maintabs button.tabbtn{flex:none;border-radius:20px;}
   .maintabs button.tabbtn.active{background:var(--mustard-dim);border-color:var(--mustard);color:var(--mustard);}
 
-  .daynav{display:flex;gap:8px;margin:20px 0 0;flex-wrap:wrap;}
-  .daynav button{flex:1;min-width:130px;text-align:left;}
-  .daynav button .tag{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint);text-transform:none;letter-spacing:0;margin-top:2px;}
-  .daynav button.active{background:var(--mustard-dim);border-color:var(--mustard);color:var(--mustard);}
-  .daynav button.active .tag{color:var(--mustard);opacity:0.75;}
-
-  .panel{display:none;padding-top:28px;}
+  .panel{display:none;padding-top:24px;}
   .panel.active{display:block;}
 
-  .exrow{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin-bottom:12px;}
-  .exhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;}
-  .exname{font-weight:600;font-size:15px;color:var(--ink);}
-  .exsub{display:block;color:var(--ink-faint);font-size:12px;margin-top:2px;font-family:'IBM Plex Mono',monospace;}
-  .exbody{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end;}
-  .target-box .tlabel, .log-box label{display:block;font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
-  .target-box .tval{font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--sage);font-weight:600;}
-  .target-box .tval.pending{color:var(--ink-faint);font-size:13px;font-weight:400;}
+  /* ACORDEÓN estilo rutina-gym */
+  .acc-card{background:var(--surface);border-radius:10px;margin-bottom:12px;overflow:hidden;border-top:3px solid var(--ink-faint);}
+  .acc-card.acc-amber{border-top-color:var(--mustard);}
+  .acc-card.acc-red{border-top-color:var(--rust);}
+  .acc-card.acc-blue{border-top-color:var(--blue);}
+  .acc-card.acc-green{border-top-color:var(--sage);}
+  .acc-header{width:100%;background:transparent;border:none;border-radius:0;display:flex;align-items:center;gap:14px;padding:18px 20px;cursor:pointer;text-align:left;}
+  .acc-header:hover{border:none;color:inherit;}
+  .acc-icon{font-size:22px;line-height:1;flex-shrink:0;}
+  .acc-titles{flex:1;min-width:0;}
+  .acc-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;color:var(--ink);letter-spacing:0.02em;text-transform:uppercase;}
+  .acc-sub{font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-top:2px;}
+  .acc-amber .acc-sub{color:var(--mustard);}
+  .acc-red .acc-sub{color:var(--rust);}
+  .acc-blue .acc-sub{color:var(--blue);}
+  .acc-green .acc-sub{color:var(--sage);}
+  .acc-meta{display:flex;align-items:center;gap:10px;color:var(--ink-faint);font-size:12.5px;font-family:'Inter',sans-serif;flex-shrink:0;}
+  .acc-meta .chevron{display:inline-block;transition:transform .2s ease;font-size:11px;}
+  .acc-card.open .acc-meta .chevron{transform:rotate(180deg);}
+  .acc-body{display:none;padding:0 20px 20px;}
+  .acc-card.open .acc-body{display:block;}
 
-  .finisher-box{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--rust);border-radius:0 5px 5px 0;padding:16px 18px;margin:20px 0;}
-  .finisher-box .lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--rust);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
-  .finisher-box p{margin:0;font-size:14px;color:var(--ink);}
+  .exrow{border-top:1px solid var(--line);padding:16px 0;}
+  .exrow:first-child{border-top:none;padding-top:4px;}
+  .exhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .exname{font-weight:700;font-size:13.5px;color:var(--ink);text-transform:uppercase;letter-spacing:0.01em;}
+  .exmeta{display:block;color:var(--ink-faint);font-size:11.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;text-transform:none;}
+  .pill{display:inline-block;padding:4px 11px;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;border:1px solid var(--mustard);color:var(--mustard);background:rgba(245,166,35,0.08);margin-right:6px;}
+  .pill.pending{border-color:var(--line-strong);color:var(--ink-faint);background:transparent;font-family:'Inter',sans-serif;font-weight:400;font-size:12px;}
+  .exbody{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .log-box label{display:block;font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px;}
+
+  .finisher-box{background:var(--surface-2);border-radius:8px;border-left:3px solid var(--mustard);padding:14px 16px;margin-top:16px;}
+  .finisher-box .lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mustard);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+  .finisher-box p{margin:0;font-size:13.5px;color:var(--ink);}
   .finisher-box small{color:var(--ink-faint);}
 
-  .closeweek{margin:32px 0;padding:20px;background:var(--surface);border:1px solid var(--mustard);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+  .warmlist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 18px;}
+  .warmlist li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px dashed var(--line);font-size:13px;color:var(--ink-dim);}
+  .warmlist li:nth-child(-n+2){border-top:none;}
+  .warmlist li b{color:var(--ink);font-weight:600;}
+  .warmlist li span{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);white-space:nowrap;}
+
+  .closeweek{margin:24px 0;padding:20px;background:var(--surface);border:1px solid var(--mustard);border-radius:10px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
   .closeweek p{margin:0;font-size:13px;color:var(--ink-dim);max-width:460px;}
 
-  details.histrow{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin-bottom:10px;padding:2px 18px;}
+  details.histrow{background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:2px 18px;}
   details.histrow summary{cursor:pointer;padding:14px 0;font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;}
   details.histrow summary .badge-deload{font-family:'Inter',sans-serif;font-size:10.5px;background:var(--rust-dim);color:var(--rust);padding:2px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.03em;}
   .histtable{width:100%;border-collapse:collapse;margin-bottom:14px;}
@@ -80,14 +104,14 @@
   .hidden-file{display:none;}
 
   .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
-  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;}
+  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;}
   .stat-card .slabel{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;}
   .stat-card .sval{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--ink);}
   .stat-card .sval.up{color:var(--sage);}
   .stat-card .sval.down{color:var(--rust);}
   .stat-card .sdelta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-faint);margin-top:4px;}
 
-  .chart-block{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px 22px;margin-bottom:20px;}
+  .chart-block{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:20px;}
   .chart-block h3{font-family:'Inter',sans-serif;text-transform:none;font-size:15px;font-weight:600;color:var(--ink);letter-spacing:0;margin-bottom:4px;}
   .chart-note{font-size:12.5px;color:var(--ink-faint);margin:0 0 16px;max-width:560px;}
   .chart-block-split{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
@@ -102,7 +126,8 @@
   @media (max-width:640px){
     .exbody{grid-template-columns:1fr;}
     header.top h1{font-size:26px;}
-    .daynav button{min-width:100px;font-size:11px;}
+    .warmlist{grid-template-columns:1fr;}
+    .warmlist li:nth-child(2){border-top:1px dashed var(--line);}
   }
 </style>
 </head>
@@ -131,12 +156,6 @@
   </div>
 
   <div id="panel-rutina" class="panel active">
-    <div class="daynav">
-      <button class="active" onclick="showDay(1,this)">Día 1<span class="tag">Cuádriceps</span></button>
-      <button onclick="showDay(2,this)">Día 2<span class="tag">Empuje sup.</span></button>
-      <button onclick="showDay(3,this)">Día 3<span class="tag">Bisagra / posterior</span></button>
-      <button onclick="showDay(4,this)">Día 4<span class="tag">Tracción sup.</span></button>
-    </div>
     <div id="daysMount"></div>
 
     <div class="closeweek">
@@ -212,11 +231,12 @@ function defaultState(){
     lastDeloadWeek: null,
     deloadDue: false,
     pendingDeload: false,
+    uiPrefs: { openAcc: ['day1'], scrollY: 0, activeTab: 'rutina' },
     currentFinishers: { day2: pickRandom(FINISHER_POOLS.day2), day4: pickRandom(FINISHER_POOLS.day4) },
     finisherHistory: { day2: [], day4: [] },
     history: [],
     days: [
-      { id:1, title:'Día 1', pattern:'Cuádriceps', exercises:[
+      { id:1, title:'Día 1', pattern:'Piernas A', icon:'🦵', color:'red', exercises:[
         ex('d1e1','Sentadilla','1x5 + 2x4 (top set)','weight',4,6,5,160,6,['Sentadilla frontal','Prensa 45°','Hack squat'],'Cuádriceps',3),
         ex('d1e2','Sentadilla búlgara','3 x 8-12','weight',8,12,2.5,30,10,['Zancada caminando','Step-up con peso'],'Cuádriceps',3),
         ex('d1e3','Goblet squat','1x12 + 1x10','weight',10,12,2.5,40,12,[],'Cuádriceps',2),
@@ -224,7 +244,7 @@ function defaultState(){
         ex('d1e5','Peso muerto rumano','1x12 + 1x10','weight',10,13,5,100,13,['Good morning barra baja','Peso muerto rumano a 1 pierna'],'Isquios / glúteo',2),
         ex('d1e6','Buenos días','1x14 + 1x12','weight',12,14,2.5,80,14,[],'Isquios / glúteo',2),
       ]},
-      { id:2, title:'Día 2', pattern:'Empuje superior', exercises:[
+      { id:2, title:'Día 2', pattern:'Empuje + finisher', icon:'💪', color:'blue', exercises:[
         ex('d2e1','Press banca','3 x 5','weight',5,6,2.5,107.5,5,['Press banca mancuernas','Press banca inclinado'],'Pecho',3),
         ex('d2e2','Remo landmine','2x12 + 1x10','weight',10,14,2.5,55,14,[],'Espalda',3),
         ex('d2e3','Pullover en polea','1x14 + 1x12','weight',12,14,2.5,45,14,[],'Espalda',2),
@@ -233,7 +253,7 @@ function defaultState(){
         ex('d2e6','Elevaciones laterales en polea','3 x 15','weight',15,15,1,5,15,['Elevación con mancuerna','Elevación en máquina'],'Hombro',3),
         ex('d2e7','Curl con barra recta','1x12 + 1x10','weight',10,14,2.5,45,14,[],'Brazos',2),
       ]},
-      { id:3, title:'Día 3', pattern:'Bisagra / posterior', exercises:[
+      { id:3, title:'Día 3', pattern:'Piernas B', icon:'🦵', color:'red', exercises:[
         ex('d3e1','Peso muerto','1x5 + 2x4 (top set)','weight',4,6,5,170,6,['Peso muerto sumo','Peso muerto déficit','Peso muerto a la trampa'],'Isquios / glúteo',3),
         ex('d3e2','Hip thrust','2x6 + 2x12','weight',6,8,5,190,8,['Hip thrust a 1 pierna','Puente de glúteo pausado'],'Isquios / glúteo',4),
         ex('d3e3','Curl femoral','2 x 12','unregistered',10,12,2.5,null,null,[],'Isquios / glúteo',2),
@@ -241,7 +261,7 @@ function defaultState(){
         ex('d3e5','Elevación de gemelo a 1 pierna','2x12 + 1x15 (peso corp.)','weight',10,12,2,14,10,[],'Pantorrilla',3),
         ex('d3e6','Plancha frontal','3 x tiempo','time',null,null,5,30,null,[],'Core',3),
       ]},
-      { id:4, title:'Día 4', pattern:'Tracción superior', exercises:[
+      { id:4, title:'Día 4', pattern:'Tracción + finisher', icon:'🏋️', color:'green', exercises:[
         ex('d4e1','Dorsalera a 1 mano','1x14 + 2x12','weight',12,16,2.5,55,16,['Jalón al pecho agarre neutro','Dominadas asistidas'],'Espalda',3),
         ex('d4e2','Press militar','3 x 8','weight',8,9,2.5,57.5,8,['Press militar mancuernas','Press Arnold'],'Hombro',3),
         ex('d4e3','Remo con barra','1x6+1x5+1x4 (descendente)','weight',4,7,5,100,7,['Remo en T','Remo Pendlay'],'Espalda',3),
@@ -258,16 +278,29 @@ function ex(id,baseName,scheme,type,repFloor,repCeiling,weightStep,currentWeight
 }
 
 const MUSCLE_COLORS = {
-  'Cuádriceps': '#D9A62E',
-  'Isquios / glúteo': '#C1502E',
-  'Pecho': '#7C9464',
-  'Espalda': '#4E7A8C',
-  'Hombro': '#9B6B9E',
+  'Cuádriceps': '#F5A623',
+  'Isquios / glúteo': '#E5484D',
+  'Pecho': '#22C55E',
+  'Espalda': '#38BDF8',
+  'Hombro': '#A78BFA',
   'Brazos': '#B98B4E',
   'Pantorrilla': '#6E6E58',
   'Core': '#8C7355',
-  'Otro': '#787C71'
+  'Otro': '#6B6F76'
 };
+
+const WARMUP_ITEMS = [
+  {name:'Plancha lateral', srs:'1-2 × 10-20"'},
+  {name:'Plancha frontal', srs:'1-2 × 10-20"'},
+  {name:'Rueda abdominal', srs:'1 × 5'},
+  {name:'Snatch a 1 brazo c/mancuerna', srs:'1-2 × 3'},
+  {name:'Hip thrust a 1 pierna', srs:'2 × 5'},
+  {name:'Monster walk', srs:'2 × 6'},
+  {name:'Face pull', srs:'2 × 5'},
+  {name:'Band pull apart', srs:'2 × 10'},
+  {name:'Rotaciones externas c/banda', srs:'1 × 6'},
+  {name:'Plancha dinámica', srs:'3 × 5'},
+];
 
 const FINISHER_POOLS = {
   day2: [
@@ -310,6 +343,7 @@ function loadState(){
     if(!raw) return defaultState();
     const parsed = JSON.parse(raw);
     if(!parsed || !parsed.days) return defaultState();
+    if(!parsed.uiPrefs) parsed.uiPrefs = { openAcc: ['day1'], scrollY: 0, activeTab: 'rutina' };
     return parsed;
   }catch(e){
     console.error('Error cargando estado, se usa el default', e);
@@ -333,22 +367,44 @@ function round(n, step){
 
 function targetText(exr){
   if(exr.type === 'unregistered'){
-    return {text:'Sin definir — anotá el peso de la máquina', pending:true};
+    return `<span class="pill pending">Sin definir</span>`;
   }
   if(exr.type === 'time'){
-    return {text: (exr.currentWeight ?? '—') + ' seg × 3', pending:false};
+    return `<span class="pill">${exr.currentWeight ?? '—'} seg</span>`;
   }
-  return {text: (exr.currentWeight ?? '—') + ' kg × ' + (exr.currentRepTarget ?? '—'), pending:false};
+  return `<span class="pill">${exr.currentWeight ?? '—'}kg × ${exr.currentRepTarget ?? '—'}</span>`;
+}
+
+function exSetsSummary(exr){
+  if(exr.type === 'time') return `${exr.sets} series`;
+  if(exr.currentRepTarget == null) return `${exr.sets} series`;
+  return `${exr.sets} series · ${exr.sets * exr.currentRepTarget} reps`;
 }
 
 function renderDays(){
   const mount = document.getElementById('daysMount');
-  mount.innerHTML = state.days.map(day => {
+
+  const warmupCard = `<div class="acc-card acc-amber" data-acc="warmup">
+    <button class="acc-header" onclick="toggleAcc(this)">
+      <span class="acc-icon">🔥</span>
+      <div class="acc-titles">
+        <div class="acc-title">Calentamiento</div>
+        <div class="acc-sub">Activación general</div>
+      </div>
+      <span class="acc-meta">${WARMUP_ITEMS.length} ejercicios <span class="chevron">▾</span></span>
+    </button>
+    <div class="acc-body">
+      <ul class="warmlist">
+        ${WARMUP_ITEMS.map(w => `<li><b>${w.name}</b><span>${w.srs}</span></li>`).join('')}
+      </ul>
+    </div>
+  </div>`;
+
+  const dayCards = state.days.map(day => {
     const finisherHtml = (day.id === 2 || day.id === 4)
-      ? `<div class="finisher-box"><div class="lbl">Finisher metabólico de esta semana</div><p>${state.currentFinishers['day'+day.id]}</p><small>La app elige un formato distinto al de las últimas 2 semanas. No hace falta que lo definas.</small></div>`
+      ? `<div class="finisher-box"><div class="lbl">Finisher metabólico de esta semana</div><p>${state.currentFinishers['day'+day.id]}</p><small>La app elige un formato distinto al de las últimas 2 semanas.</small></div>`
       : '';
     const rows = day.exercises.map(exr => {
-      const t = targetText(exr);
       const variantBtn = exr.variants.length
         ? `<button class="small" onclick="rotateVariant('${exr.id}')">Cambiar ejercicio</button>`
         : '';
@@ -363,27 +419,55 @@ function renderDays(){
       }
       return `<div class="exrow" id="row-${exr.id}">
         <div class="exhead">
-          <div><span class="exname">${exr.name}</span><span class="exsub">${exr.scheme}</span></div>
-          ${variantBtn}
+          <div><span class="exname">${exr.name}</span><span class="exmeta">${exr.scheme}</span></div>
+          <span style="text-align:right;">
+            <span class="acc-meta" style="display:block;margin-bottom:6px;">${exSetsSummary(exr)}</span>
+            ${variantBtn}
+          </span>
         </div>
-        <div class="exbody">
-          <div class="target-box"><div class="tlabel">Objetivo esta semana</div><div class="tval ${t.pending?'pending':''}">${t.text}</div></div>
-          ${inputs}
-        </div>
+        <div style="margin-bottom:10px;">${targetText(exr)}</div>
+        ${inputs}
       </div>`;
     }).join('');
-    return `<div class="dayblock" data-day="${day.id}" style="display:${day.id===1?'block':'none'}">
-      <h2 style="font-size:20px;margin-bottom:16px;">${day.title} <span style="color:var(--ink-faint);font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:none;">— ${day.pattern}</span></h2>
-      ${rows}
-      ${finisherHtml}
+    return `<div class="acc-card acc-${day.color}" data-acc="day${day.id}">
+      <button class="acc-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">${day.icon}</span>
+        <div class="acc-titles">
+          <div class="acc-title">${day.title}</div>
+          <div class="acc-sub">${day.pattern}</div>
+        </div>
+        <span class="acc-meta">${day.exercises.length} ejercicios <span class="chevron">▾</span></span>
+      </button>
+      <div class="acc-body">
+        ${rows}
+        ${finisherHtml}
+      </div>
     </div>`;
   }).join('');
+
+  mount.innerHTML = warmupCard + dayCards;
+
+  // restaurar qué tarjetas estaban abiertas (persistido en state.uiPrefs.openAcc)
+  const openAccKeys = new Set(state.uiPrefs.openAcc || []);
+  openAccKeys.forEach(key => {
+    const card = mount.querySelector(`[data-acc="${key}"]`);
+    if(card) card.classList.add('open');
+  });
+  if(openAccKeys.size === 0){
+    const first = mount.querySelector('[data-acc="day1"]');
+    if(first){ first.classList.add('open'); state.uiPrefs.openAcc = ['day1']; saveState(); }
+  }
 }
 
-function showDay(n, btn){
-  document.querySelectorAll('.dayblock').forEach(d => d.style.display = (d.dataset.day === String(n)) ? 'block' : 'none');
-  document.querySelectorAll('.daynav button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+function toggleAcc(btn){
+  const card = btn.closest('.acc-card');
+  const key = card.dataset.acc;
+  card.classList.toggle('open');
+  const openAccKeys = new Set(state.uiPrefs.openAcc || []);
+  if(card.classList.contains('open')) openAccKeys.add(key);
+  else openAccKeys.delete(key);
+  state.uiPrefs.openAcc = Array.from(openAccKeys);
+  saveState();
 }
 
 function showMain(name, btn){
@@ -392,6 +476,8 @@ function showMain(name, btn){
   document.getElementById('panel-rutina').classList.toggle('active', name==='rutina');
   document.getElementById('panel-historial').classList.toggle('active', name==='historial');
   document.getElementById('panel-estadisticas').classList.toggle('active', name==='estadisticas');
+  state.uiPrefs.activeTab = name;
+  saveState();
   if(name === 'historial') renderHistory();
   if(name === 'estadisticas') renderStats();
 }
@@ -482,6 +568,7 @@ function closeWeek(){
   const weeksSinceDeload = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
   state.deloadDue = weeksSinceDeload >= 8;
 
+  state.uiPrefs.scrollY = 0;
   saveState();
   render();
   window.scrollTo({top:0, behavior:'smooth'});
@@ -662,10 +749,10 @@ function destroyChart(key){
 const CHART_BASE = {
   responsive:true,
   maintainAspectRatio:false,
-  plugins:{ legend:{ labels:{ color:'#A6A99C', font:{family:'Inter'} } } },
+  plugins:{ legend:{ labels:{ color:'#9CA0A6', font:{family:'Inter'} } } },
   scales:{
-    x:{ ticks:{ color:'#787C71' }, grid:{ color:'rgba(236,232,221,0.06)' } },
-    y:{ ticks:{ color:'#787C71' }, grid:{ color:'rgba(236,232,221,0.06)' } }
+    x:{ ticks:{ color:'#6B6F76' }, grid:{ color:'rgba(255,255,255,0.06)' } },
+    y:{ ticks:{ color:'#6B6F76' }, grid:{ color:'rgba(255,255,255,0.06)' } }
   }
 };
 
@@ -688,7 +775,7 @@ function renderStats(){
   destroyChart('volumeTotal');
   charts.volumeTotal = new Chart(document.getElementById('chartVolumeTotal'), {
     type:'line',
-    data:{ labels, datasets:[{ label:'Volumen total (kg)', data: stats.perWeek.map(w=>Math.round(w.totalVolume)), borderColor:'#D9A62E', backgroundColor:'rgba(217,166,46,0.12)', fill:true, tension:0.3 }] },
+    data:{ labels, datasets:[{ label:'Volumen total (kg)', data: stats.perWeek.map(w=>Math.round(w.totalVolume)), borderColor:'#F5A623', backgroundColor:'rgba(245,166,35,0.12)', fill:true, tension:0.3 }] },
     options: CHART_BASE
   });
 
@@ -704,12 +791,12 @@ function renderStats(){
   destroyChart('reps');
   charts.reps = new Chart(document.getElementById('chartReps'), {
     type:'line',
-    data:{ labels, datasets:[{ label:'Reps totales', data: stats.perWeek.map(w=>w.totalReps), borderColor:'#7C9464', backgroundColor:'rgba(124,148,100,0.12)', fill:true, tension:0.3 }] },
+    data:{ labels, datasets:[{ label:'Reps totales', data: stats.perWeek.map(w=>w.totalReps), borderColor:'#22C55E', backgroundColor:'rgba(34,197,94,0.12)', fill:true, tension:0.3 }] },
     options: CHART_BASE
   });
 
   destroyChart('mainLifts');
-  const liftColors = ['#D9A62E','#C1502E','#4E7A8C','#9B6B9E'];
+  const liftColors = ['#F5A623','#E5484D','#38BDF8','#A78BFA'];
   charts.mainLifts = new Chart(document.getElementById('chartMainLifts'), {
     type:'line',
     data:{ labels, datasets: stats.mainLiftsSeries.map((s,i) => ({
@@ -723,14 +810,14 @@ function renderStats(){
   charts.muscleShare = new Chart(document.getElementById('chartMuscleShare'), {
     type:'doughnut',
     data:{ labels: shareLabels, datasets:[{ data: shareLabels.map(m=>Math.round(stats.muscleShareTotal[m])), backgroundColor: shareLabels.map(m=>MUSCLE_COLORS[m]) }] },
-    options:{ plugins:{ legend:{ position:'bottom', labels:{ color:'#A6A99C', font:{family:'Inter'} } } } }
+    options:{ plugins:{ legend:{ position:'bottom', labels:{ color:'#9CA0A6', font:{family:'Inter'} } } } }
   });
 
   destroyChart('deloadTimeline');
   charts.deloadTimeline = new Chart(document.getElementById('chartDeloadTimeline'), {
     type:'bar',
     data:{ labels, datasets:[{ label:'Volumen (kg)', data: stats.perWeek.map(w=>Math.round(w.totalVolume)),
-      backgroundColor: stats.perWeek.map(w => w.deload ? '#C1502E' : '#D9A62E') }] },
+      backgroundColor: stats.perWeek.map(w => w.deload ? '#E5484D' : '#F5A623') }] },
     options: CHART_BASE
   });
 }
@@ -743,7 +830,35 @@ function render(){
   if(document.getElementById('panel-estadisticas').classList.contains('active')) renderStats();
 }
 
+function restoreUiState(){
+  // restaurar pestaña activa
+  const savedTab = state.uiPrefs.activeTab || 'rutina';
+  if(savedTab !== 'rutina'){
+    const btn = Array.from(document.querySelectorAll('.maintabs .tabbtn'))
+      .find(b => b.textContent.toLowerCase().includes(
+        savedTab === 'historial' ? 'historial' : 'estad'
+      ));
+    if(btn) showMain(savedTab, btn);
+  }
+  // restaurar scroll, esperando a que el layout esté pintado
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: state.uiPrefs.scrollY || 0, behavior: 'instant' });
+    });
+  });
+}
+
+let scrollSaveTimeout = null;
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollSaveTimeout);
+  scrollSaveTimeout = setTimeout(() => {
+    state.uiPrefs.scrollY = window.scrollY;
+    saveState();
+  }, 250);
+});
+
 render();
+restoreUiState();
 </script>
 </body>
 </html>
