@@ -478,6 +478,20 @@ function saveState(pushImmediately){
   else scheduleCloudPush();
 }
 
+// Para preferencias de pantalla (scroll, qué acordeón está abierto, qué
+// pestaña estás mirando): se guardan en este dispositivo, pero NO cuentan
+// como "cambios pendientes" ni disparan sincronización con la nube. Si esto
+// contara como "dirty", un dispositivo que solo abriste para mirar (sin
+// cargar ningún dato real) podría terminar subiendo su copia vieja y
+// pisando datos más nuevos hechos desde otro dispositivo.
+function saveLocalOnly(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    console.error('No se pudo guardar', e);
+  }
+}
+
 let cloudPushTimeout = null;
 function scheduleCloudPush(){
   if(!firebaseReady) return;
@@ -547,9 +561,43 @@ function syncFromCloud(){
   });
 }
 
+// Trae la nube y la adopta sin importar el flag "dirty" de este dispositivo.
+// Se usa como rescate manual: si un dispositivo quedó con cambios pendientes
+// viejos (por ejemplo, no se sincronizó en semanas), esto lo pone al día.
+function forcePullFromCloud(){
+  updateSyncBadge('syncing');
+  cloudDocRef().get().then(snap => {
+    if(snap.exists){
+      const cloud = snap.data();
+      state = reconcileState(cloud);
+      state.dirty = false;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+      restoreUiState();
+      updateSyncBadge('ok');
+    } else {
+      updateSyncBadge('error');
+      alert('Todavía no hay nada guardado en la nube.');
+    }
+  }).catch(err => {
+    console.error('No se pudo traer la nube', err);
+    updateSyncBadge('error');
+  });
+}
+
 function syncNow(){
   if(!firebaseReady){
     alert('Firebase no está configurado en este archivo todavía.');
+    return;
+  }
+  if(state.dirty){
+    const wantsCloud = confirm(
+      'Este dispositivo tiene cambios propios que todavía no se subieron a la nube.\n\n' +
+      'Aceptar = traer la versión de la nube y descartar lo que haya acá sin subir.\n' +
+      'Cancelar = intentar subir lo de este dispositivo a la nube en cambio.'
+    );
+    if(wantsCloud) forcePullFromCloud();
+    else pushToCloud();
     return;
   }
   syncFromCloud();
@@ -676,7 +724,7 @@ function toggleAcc(btn){
   if(card.classList.contains('open')) openAccKeys.add(key);
   else openAccKeys.delete(key);
   state.uiPrefs.openAcc = Array.from(openAccKeys);
-  saveState();
+  saveLocalOnly();
 }
 
 function showMain(name, btn){
@@ -686,7 +734,7 @@ function showMain(name, btn){
   document.getElementById('panel-historial').classList.toggle('active', name==='historial');
   document.getElementById('panel-estadisticas').classList.toggle('active', name==='estadisticas');
   state.uiPrefs.activeTab = name;
-  saveState();
+  saveLocalOnly();
   if(name === 'historial'){ renderHistory(); renderWodHistory(); }
   if(name === 'estadisticas') renderStats();
 }
@@ -1092,7 +1140,7 @@ window.addEventListener('scroll', () => {
   clearTimeout(scrollSaveTimeout);
   scrollSaveTimeout = setTimeout(() => {
     state.uiPrefs.scrollY = window.scrollY;
-    saveState();
+    saveLocalOnly();
   }, 250);
 });
 
