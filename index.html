@@ -156,6 +156,7 @@
       <div id="syncBadge" style="margin-top:8px;"></div>
     </div>
     <div class="toprow-actions">
+      <button class="small" onclick="syncNow()">Sincronizar ahora</button>
       <button class="small" onclick="downloadBackup()">Descargar backup</button>
       <button class="small" onclick="document.getElementById('fileInput').click()">Restaurar backup</button>
       <input type="file" id="fileInput" class="hidden-file" accept="application/json" onchange="restoreBackup(event)">
@@ -254,15 +255,15 @@ const STORAGE_KEY = 'rutina-santiago-v1';
 // Estos valores son públicos por diseño, no son secretos.
 // ============================================================
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDX0XKMySVzB2Riq-esCqDJsipI23SNvcU",
-  authDomain: "chandlergym-abbed.firebaseapp.comA",
-  projectId: "chandlergym-abbed",
-  storageBucket: "chandlergym-abbed.firebasestorage.app",
-  messagingSenderId: "603294697062",
-  appId: "1:603294697062:web:be9c44dcfc34dbc5740fa7"
+  apiKey: "PEGA_TU_API_KEY_ACA",
+  authDomain: "PEGA_TU_AUTH_DOMAIN_ACA",
+  projectId: "PEGA_TU_PROJECT_ID_ACA",
+  storageBucket: "PEGA_TU_STORAGE_BUCKET_ACA",
+  messagingSenderId: "PEGA_TU_SENDER_ID_ACA",
+  appId: "PEGA_TU_APP_ID_ACA"
 };
 // Tiene que ser EXACTAMENTE la misma clave que pusiste en las reglas de Firestore
-const FIREBASE_PASSCODE = "lunalopezdiez";
+const FIREBASE_PASSCODE = "PONE_TU_CLAVE_SECRETA_ACA";
 
 let db = null;
 let firebaseReady = false;
@@ -289,6 +290,8 @@ function defaultState(){
     pendingDeload: false,
     uiPrefs: { openAcc: ['day1'], scrollY: 0, activeTab: 'rutina' },
     updatedAt: Date.now(),
+    dirty: false,
+    draftLog: {},
     currentFinishers: { day2: pickRandom(FINISHER_POOLS.day2), day4: pickRandom(FINISHER_POOLS.day4) },
     finisherHistory: { day2: [], day4: [] },
     history: [],
@@ -394,29 +397,66 @@ function pickFinisher(dayKey, state){
 
 let state = loadState();
 
+// Combina datos guardados (progreso real: pesos, reps, historial) con la
+// estructura/definición actual del código (íconos, colores, esquemas, rangos
+// de reps, variantes). Así, cuando el programa se actualiza, los datos viejos
+// no quedan con campos faltantes ("undefined") ni pisan mejoras de esquema.
+function reconcileState(saved){
+  const fresh = defaultState();
+  const merged = Object.assign({}, fresh, saved);
+  merged.days = fresh.days.map(freshDay => {
+    const savedDay = (saved.days || []).find(d => d.id === freshDay.id);
+    const mergedDay = { id: freshDay.id, title: freshDay.title, pattern: freshDay.pattern, icon: freshDay.icon, color: freshDay.color };
+    mergedDay.exercises = freshDay.exercises.map(freshEx => {
+      const savedEx = savedDay && savedDay.exercises ? savedDay.exercises.find(e => e.id === freshEx.id) : null;
+      if(!savedEx) return freshEx;
+      return {
+        id: freshEx.id,
+        baseName: freshEx.baseName,
+        name: savedEx.name || freshEx.name,
+        scheme: freshEx.scheme,
+        type: savedEx.type || freshEx.type,
+        repFloor: freshEx.repFloor,
+        repCeiling: freshEx.repCeiling,
+        weightStep: freshEx.weightStep,
+        currentWeight: savedEx.currentWeight !== undefined ? savedEx.currentWeight : freshEx.currentWeight,
+        currentRepTarget: savedEx.currentRepTarget !== undefined ? savedEx.currentRepTarget : freshEx.currentRepTarget,
+        variants: freshEx.variants,
+        muscle: freshEx.muscle,
+        sets: freshEx.sets,
+      };
+    });
+    return mergedDay;
+  });
+  if(!merged.uiPrefs) merged.uiPrefs = { openAcc: ['day1'], scrollY: 0, activeTab: 'rutina' };
+  if(!merged.draftLog) merged.draftLog = {};
+  return merged;
+}
+
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultState();
     const parsed = JSON.parse(raw);
     if(!parsed || !parsed.days) return defaultState();
-    if(!parsed.uiPrefs) parsed.uiPrefs = { openAcc: ['day1'], scrollY: 0, activeTab: 'rutina' };
-    return parsed;
+    return reconcileState(parsed);
   }catch(e){
     console.error('Error cargando estado, se usa el default', e);
     return defaultState();
   }
 }
 
-function saveState(){
+function saveState(pushImmediately){
   state.updatedAt = Date.now();
+  state.dirty = true; // hay cambios locales que todavía no se confirmaron en la nube
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }catch(e){
     console.error('No se pudo guardar', e);
     alert('No se pudo guardar el progreso en este navegador. Descargá un backup para no perder los datos.');
   }
-  scheduleCloudPush();
+  if(pushImmediately) pushToCloud();
+  else scheduleCloudPush();
 }
 
 let cloudPushTimeout = null;
@@ -433,40 +473,50 @@ function updateSyncBadge(status){
   const labels = {
     ok: 'Sincronizado con la nube',
     syncing: 'Sincronizando…',
+    pending: 'Cambios sin subir aún — reintentando',
     error: 'Sin conexión con la nube — usando datos de este dispositivo'
   };
   mount.innerHTML = `<span class="sync-badge ${status}"><span class="dot"></span>${labels[status] || ''}</span>`;
 }
 
+// "dirty" = este dispositivo tiene cambios que todavía no se confirmaron
+// como guardados en la nube. Mientras sea true, este dispositivo manda:
+// no se pisa lo local con lo que haya en la nube.
 function pushToCloud(){
   if(!firebaseReady) return;
   updateSyncBadge('syncing');
-  const payload = Object.assign({}, state, { passcode: FIREBASE_PASSCODE });
+  const payload = Object.assign({}, state, { passcode: FIREBASE_PASSCODE, dirty: false });
   cloudDocRef().set(payload)
-    .then(() => updateSyncBadge('ok'))
+    .then(() => {
+      state.dirty = false;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      updateSyncBadge('ok');
+    })
     .catch(err => {
       console.error('Error subiendo datos a Firebase', err);
       updateSyncBadge('error');
     });
 }
 
+// Al abrir la app: si este dispositivo tiene cambios propios sin confirmar,
+// esos cambios son los que importan — se intentan subir. Si no tiene
+// cambios pendientes, se asume que la nube puede tener algo más nuevo
+// (hecho desde otro dispositivo) y se adopta esa versión.
 function syncFromCloud(){
   if(!firebaseReady) return;
   updateSyncBadge('syncing');
+  if(state.dirty){
+    pushToCloud();
+    return;
+  }
   cloudDocRef().get().then(snap => {
     if(snap.exists){
       const cloud = snap.data();
-      const localUpdated = state.updatedAt || 0;
-      const cloudUpdated = cloud.updatedAt || 0;
-      if(cloudUpdated > localUpdated){
-        state = cloud;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        render();
-        restoreUiState();
-      } else if(localUpdated > cloudUpdated){
-        pushToCloud();
-        return;
-      }
+      state = reconcileState(cloud);
+      state.dirty = false;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+      restoreUiState();
     } else {
       pushToCloud();
       return;
@@ -476,6 +526,14 @@ function syncFromCloud(){
     console.error('No se pudo sincronizar con Firebase, se sigue usando la copia local', err);
     updateSyncBadge('error');
   });
+}
+
+function syncNow(){
+  if(!firebaseReady){
+    alert('Firebase no está configurado en este archivo todavía.');
+    return;
+  }
+  syncFromCloud();
 }
 
 function round(n, step){
@@ -526,13 +584,16 @@ function renderDays(){
       const variantBtn = exr.variants.length
         ? `<button class="small" onclick="rotateVariant('${exr.id}')">Cambiar ejercicio</button>`
         : '';
+      const draft = state.draftLog[exr.id] || {};
+      const wVal = draft.weight !== undefined ? draft.weight : exr.currentWeight;
+      const rVal = draft.reps !== undefined ? draft.reps : exr.currentRepTarget;
       let inputs;
       if(exr.type === 'time'){
-        inputs = `<div class="log-box"><label>Segundos logrados<input type="number" id="w-${exr.id}" value="${exr.currentWeight ?? ''}"></label></div>`;
+        inputs = `<div class="log-box"><label>Segundos logrados<input type="number" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"></label></div>`;
       } else {
         inputs = `<div class="log-box" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <label>Peso usado (kg)<input type="number" step="0.5" id="w-${exr.id}" value="${exr.currentWeight ?? ''}"></label>
-          <label>Reps logradas<input type="number" id="r-${exr.id}" value="${exr.currentRepTarget ?? ''}"></label>
+          <label>Peso usado (kg)<input type="number" step="0.5" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"></label>
+          <label>Reps logradas<input type="number" id="r-${exr.id}" value="${rVal ?? ''}" oninput="saveDraft('${exr.id}')"></label>
         </div>`;
       }
       return `<div class="exrow" id="row-${exr.id}">
@@ -575,6 +636,17 @@ function renderDays(){
     const first = mount.querySelector('[data-acc="day1"]');
     if(first){ first.classList.add('open'); state.uiPrefs.openAcc = ['day1']; saveState(); }
   }
+}
+
+let draftSaveTimeouts = {};
+function saveDraft(exId){
+  const wInput = document.getElementById('w-'+exId);
+  const rInput = document.getElementById('r-'+exId);
+  const weight = wInput && wInput.value !== '' ? parseFloat(wInput.value) : undefined;
+  const reps = rInput && rInput.value !== '' ? parseInt(rInput.value) : undefined;
+  state.draftLog[exId] = { weight, reps };
+  clearTimeout(draftSaveTimeouts[exId]);
+  draftSaveTimeouts[exId] = setTimeout(() => { saveState(); }, 600);
 }
 
 function toggleAcc(btn){
@@ -623,7 +695,8 @@ function rotateVariant(id){
   exr.currentWeight = isNaN(parsed) ? null : parsed;
   exr.currentRepTarget = exr.type === 'time' ? null : exr.repFloor;
   exr.type = (exr.type === 'unregistered') ? 'unregistered' : exr.type;
-  saveState();
+  delete state.draftLog[id];
+  saveState(true);
   renderDays();
 }
 
@@ -687,7 +760,8 @@ function closeWeek(){
   state.deloadDue = weeksSinceDeload >= 8;
 
   state.uiPrefs.scrollY = 0;
-  saveState();
+  state.draftLog = {};
+  saveState(true);
   render();
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -701,7 +775,7 @@ function editWeekNumber(){
     return;
   }
   state.weekNumber = parsed;
-  saveState();
+  saveState(true);
   render();
 }
 
@@ -712,15 +786,20 @@ function markDeload(){
       if(exr.type === 'weight' && exr.currentWeight != null){
         const wInput = document.getElementById('w-'+exr.id);
         const rInput = document.getElementById('r-'+exr.id);
-        if(wInput) wInput.value = round(exr.currentWeight * 0.85, exr.weightStep);
+        const w = round(exr.currentWeight * 0.85, exr.weightStep);
+        if(wInput) wInput.value = w;
         if(rInput) rInput.value = exr.repFloor;
+        state.draftLog[exr.id] = { weight: w, reps: exr.repFloor };
       }
       if(exr.type === 'time' && exr.currentWeight != null){
         const wInput = document.getElementById('w-'+exr.id);
-        if(wInput) wInput.value = Math.max(10, exr.currentWeight - 10);
+        const w = Math.max(10, exr.currentWeight - 10);
+        if(wInput) wInput.value = w;
+        state.draftLog[exr.id] = { weight: w };
       }
     });
   });
+  saveState(true);
   renderDeloadBanner();
 }
 
@@ -795,9 +874,10 @@ function restoreBackup(event){
     try{
       const parsed = JSON.parse(e.target.result);
       if(!parsed.days) throw new Error('Formato inválido');
-      state = parsed;
-      saveState();
+      state = reconcileState(parsed);
+      saveState(true);
       render();
+      restoreUiState();
       alert('Backup restaurado correctamente.');
     }catch(err){
       alert('No se pudo leer ese archivo como backup válido.');
@@ -812,7 +892,7 @@ function resetApp(){
   if(!confirm('Esto borra todo el progreso guardado en este navegador (pesos, historial).' + cloudWarning + ' ¿Descargaste un backup antes? Esta acción no se puede deshacer.')) return;
   localStorage.removeItem(STORAGE_KEY);
   state = defaultState();
-  saveState();
+  saveState(true);
   render();
   restoreUiState();
 }
