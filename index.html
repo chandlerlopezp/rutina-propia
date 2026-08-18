@@ -99,6 +99,14 @@
   .histtable td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--sage);}
   .histfin{font-size:12px;color:var(--ink-faint);margin:0 0 12px;}
 
+  .wod-row{background:var(--surface);border-radius:8px;padding:14px 16px;margin-bottom:8px;display:flex;gap:14px;align-items:flex-start;border-left:3px solid var(--ink-faint);}
+  .wod-row.wod-blue{border-left-color:var(--blue);}
+  .wod-row.wod-green{border-left-color:var(--sage);}
+  .wod-row .wod-tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);white-space:nowrap;flex-shrink:0;padding-top:1px;}
+  .wod-row.wod-blue .wod-tag{color:var(--blue);}
+  .wod-row.wod-green .wod-tag{color:var(--sage);}
+  .wod-row p{margin:0;font-size:13.5px;color:var(--ink);flex:1;}
+
   footer.foot{padding:36px 0 0;border-top:1px solid var(--line);margin-top:20px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;}
   footer.foot p{color:var(--ink-faint);font-size:12px;max-width:460px;margin:0;}
   .hidden-file{display:none;}
@@ -165,6 +173,12 @@
   </div>
 
   <div id="panel-historial" class="panel">
+    <div class="wod-section">
+      <h2 style="font-size:18px;margin-bottom:4px;">WODs realizados</h2>
+      <p class="chart-note" style="margin-bottom:16px;">Todos los finishers metabólicos que hiciste, semana a semana, más recientes primero.</p>
+      <div id="wodMount"></div>
+    </div>
+    <h2 style="font-size:18px;margin:32px 0 16px;">Historial de semanas</h2>
     <div id="histMount"></div>
   </div>
 
@@ -478,7 +492,7 @@ function showMain(name, btn){
   document.getElementById('panel-estadisticas').classList.toggle('active', name==='estadisticas');
   state.uiPrefs.activeTab = name;
   saveState();
-  if(name === 'historial') renderHistory();
+  if(name === 'historial'){ renderHistory(); renderWodHistory(); }
   if(name === 'estadisticas') renderStats();
 }
 
@@ -615,6 +629,25 @@ function renderDeloadBanner(){
   }
   const weeksSince = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
   mount.innerHTML = `<div class="banner"><p>Llevás <b>${weeksSince} semanas</b> sin descarga. Si te sentís cargado, marcá esta semana como descarga antes de entrenar.</p><button class="small" onclick="markDeload()">Marcar esta semana como descarga</button></div>`;
+}
+
+function renderWodHistory(){
+  const mount = document.getElementById('wodMount');
+  if(state.history.length === 0){
+    mount.innerHTML = `<p style="color:var(--ink-dim);font-size:14px;">Todavía no hay WODs registrados. Aparecen acá en cuanto cierres tu primera semana.</p>`;
+    return;
+  }
+  const rows = [];
+  state.history.slice().reverse().forEach(week => {
+    rows.push({ weekNumber: week.weekNumber, date: week.date, day: 4, color: 'green', label: 'Día 4 · Tracción', text: week.finishers.day4 });
+    rows.push({ weekNumber: week.weekNumber, date: week.date, day: 2, color: 'blue', label: 'Día 2 · Empuje', text: week.finishers.day2 });
+  });
+  mount.innerHTML = rows.map(r => `
+    <div class="wod-row wod-${r.color}">
+      <div class="wod-tag">S${r.weekNumber}<br>${r.label}</div>
+      <p>${r.text}</p>
+    </div>
+  `).join('');
 }
 
 function renderHistory(){
@@ -826,7 +859,7 @@ function render(){
   document.getElementById('weeknum').textContent = state.weekNumber;
   renderDeloadBanner();
   renderDays();
-  if(document.getElementById('panel-historial').classList.contains('active')) renderHistory();
+  if(document.getElementById('panel-historial').classList.contains('active')){ renderHistory(); renderWodHistory(); }
   if(document.getElementById('panel-estadisticas').classList.contains('active')) renderStats();
 }
 
