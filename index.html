@@ -340,7 +340,7 @@ function defaultState(){
     history: [],
     days: [
       { id:1, title:'Día 1', pattern:'Piernas A', icon:'🦵', color:'red', exercises:[
-        ex('d1e1','Sentadilla','1x5 + 2x4 (top set)','weight',4,6,5,160,6,['Sentadilla frontal','Prensa 45°','Hack squat'],'Cuádriceps',[0,-1,-1]),
+        ex('d1e1','Sentadilla','1x5 + 2x4 · mismo peso las 3','weight',4,6,5,160,6,['Sentadilla frontal','Prensa 45°','Hack squat'],'Cuádriceps',[0,-1,-1]),
         ex('d1e2','Sentadilla búlgara','3 x 8-12','weight',8,12,2.5,30,10,['Zancada caminando','Step-up con peso'],'Cuádriceps',[0,0,0]),
         ex('d1e3','Goblet squat','1x12 + 1x10','weight',10,12,2.5,40,12,[],'Cuádriceps',[0,-2]),
         ex('d1e4','Extensión de cuádriceps','2 x 12','unregistered',10,12,2.5,null,null,[],'Cuádriceps',[0,0]),
@@ -358,8 +358,8 @@ function defaultState(){
         ex('d2e8','Curl con barra recta','1x12 + 1x10','weight',10,14,2.5,45,14,[],'Brazos',[0,-2]),
       ]},
       { id:3, title:'Día 3', pattern:'Piernas B', icon:'🦵', color:'red', exercises:[
-        ex('d3e1','Peso muerto','1x5 + 2x4 (top set)','weight',4,6,5,170,6,['Peso muerto sumo','Peso muerto déficit','Peso muerto a la trampa'],'Isquios / glúteo',[0,-1,-1]),
-        ex('d3e2','Hip thrust','2x6 pesado + 2x12 backoff','weight',6,8,5,190,8,['Hip thrust a 1 pierna','Puente de glúteo pausado'],'Isquios / glúteo',[0,0,4,4],[1,1,0.68,0.68]),
+        ex('d3e1','Peso muerto','1x5 + 2x4 · mismo peso las 3','weight',4,6,5,170,6,['Peso muerto sumo','Peso muerto déficit','Peso muerto a la trampa'],'Isquios / glúteo',[0,-1,-1]),
+        ex('d3e2','Hip thrust','2x6 pesado + 2x12 backoff (~70%)','weight',6,8,5,190,8,['Hip thrust a 1 pierna','Puente de glúteo pausado'],'Isquios / glúteo',[0,0,4,4],[1,1,0.68,0.68]),
         ex('d3e3','Curl femoral','2 x 12','unregistered',10,12,2.5,null,null,[],'Isquios / glúteo',[0,0]),
         ex('d3e4','Estocada hacia atrás','2 x 10','weight',10,12,2.5,80,12,['Estocada búlgara foco isquio','Peso muerto rumano a 1 pierna'],'Isquios / glúteo',[0,0]),
         ex('d3e5','Elevación de gemelo a 1 pierna','2x12 + 1x15','weight',10,12,2,14,10,[],'Pantorrilla',[0,0,3]),
@@ -368,7 +368,7 @@ function defaultState(){
       { id:4, title:'Día 4', pattern:'Tracción', icon:'🏋️', color:'green', exercises:[
         ex('d4e1','Dorsalera a 1 mano','1x14 + 2x12','weight',12,16,2.5,55,16,['Jalón al pecho agarre neutro','Dominadas asistidas'],'Espalda',[0,-2,-2]),
         ex('d4e2','Press militar','3 x 8','weight',8,9,2.5,57.5,8,['Press militar mancuernas','Press Arnold'],'Hombro',[0,0,0]),
-        ex('d4e3','Remo con barra','1x6+1x5+1x4 (descendente)','weight',4,7,5,100,7,['Remo en T','Remo Pendlay'],'Espalda',[0,-1,-2]),
+        ex('d4e3','Remo con barra','1x6+1x5+1x4 · mismo peso','weight',4,7,5,100,7,['Remo en T','Remo Pendlay'],'Espalda',[0,-1,-2]),
         ex('d4e4','Remo en polea a 1 mano','1x10 + 1x8','weight',8,12,2.5,40,12,[],'Espalda',[0,-2]),
         ex('d4e5','Skull crusher','2 x 10','weight',10,12,2.5,35,12,[],'Brazos',[0,0]),
         ex('d4e6','Extensión unilateral en polea','2 x 12','weight',12,14,2.5,25,12,[],'Brazos',[0,0]),
@@ -724,8 +724,8 @@ function renderDays(){
         inputs = `<div class="log-box"><label>Segundos logrados<input type="number" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label></div>`;
       } else {
         inputs = `<div class="log-box" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <label>Peso usado (kg)<input type="number" step="0.5" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
-          <label>Reps logradas<input type="number" id="r-${exr.id}" value="${rVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
+          <label>Peso top set (kg)<input type="number" step="0.5" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
+          <label>Reps del top set<input type="number" id="r-${exr.id}" value="${rVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
         </div>`;
       }
       return `<div class="exrow" id="row-${exr.id}">
@@ -765,6 +765,7 @@ function renderDays(){
         <span class="acc-meta">${statusBadge} <span class="chevron">▾</span></span>
       </button>
       <div class="acc-body">
+        <p class="chart-note" style="margin-bottom:14px;">Cargá siempre el <b style="color:var(--ink-dim);">top set</b>: el peso y las reps de la serie más pesada (la primera). Las series siguientes van al mismo peso con menos reps, salvo que el esquema diga backoff.</p>
         ${rows}
         ${closeBtn}
       </div>
