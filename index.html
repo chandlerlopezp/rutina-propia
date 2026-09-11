@@ -308,6 +308,9 @@ try{
   if(FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('PEGA_')){
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
+    // Firestore rechaza valores undefined y lanza el error de forma sincrónica
+    // (antes de que corra cualquier .catch). Esto los ignora en vez de romper.
+    db.settings({ ignoreUndefinedProperties: true });
     auth = firebase.auth();
     firebaseReady = true;
   }
@@ -558,20 +561,38 @@ function updateSyncBadge(status){
 // "dirty" = este dispositivo tiene cambios que todavía no se confirmaron
 // como guardados en la nube. Mientras sea true, este dispositivo manda:
 // no se pisa lo local con lo que haya en la nube.
+// Deja el objeto listo para Firestore: saca cualquier undefined (que Firestore
+// rechaza) convirtiéndolo en null, de forma recursiva.
+function sanitizeForCloud(value){
+  if(value === undefined) return null;
+  if(value === null || typeof value !== 'object') return value;
+  if(Array.isArray(value)) return value.map(sanitizeForCloud);
+  const out = {};
+  Object.keys(value).forEach(k => { out[k] = sanitizeForCloud(value[k]); });
+  return out;
+}
+
 function pushToCloud(){
   if(!firebaseReady) return;
   updateSyncBadge('syncing');
-  const payload = Object.assign({}, state, { dirty: false });
-  cloudDocRef().set(payload)
-    .then(() => {
-      state.dirty = false;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      updateSyncBadge('ok');
-    })
-    .catch(err => {
-      console.error('Error subiendo datos a Firebase', err);
-      updateSyncBadge('error');
-    });
+  try{
+    const payload = sanitizeForCloud(Object.assign({}, state, { dirty: false }));
+    cloudDocRef().set(payload)
+      .then(() => {
+        state.dirty = false;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        updateSyncBadge('ok');
+      })
+      .catch(err => {
+        console.error('Error subiendo datos a Firebase', err);
+        updateSyncBadge('error');
+      });
+  }catch(err){
+    // Errores sincrónicos (payload inválido): sin esto el badge quedaba
+    // colgado en "Sincronizando…" y los datos nunca subían.
+    console.error('Payload inválido para Firebase', err);
+    updateSyncBadge('error');
+  }
 }
 
 // Al abrir la app: si este dispositivo tiene cambios propios sin confirmar,
@@ -843,8 +864,8 @@ function reopenDay(dayId){
 function saveDraft(exId){
   const wInput = document.getElementById('w-'+exId);
   const rInput = document.getElementById('r-'+exId);
-  const weight = wInput && wInput.value !== '' ? parseFloat(wInput.value) : undefined;
-  const reps = rInput && rInput.value !== '' ? parseInt(rInput.value) : undefined;
+  const weight = wInput && wInput.value !== '' ? parseFloat(wInput.value) : null;
+  const reps = rInput && rInput.value !== '' ? parseInt(rInput.value) : null;
   state.draftLog[exId] = { weight, reps };
   clearTimeout(draftSaveTimeouts[exId]);
   draftSaveTimeouts[exId] = setTimeout(() => { saveState(); }, 600);
