@@ -577,6 +577,10 @@ function pushToCloud(){
   updateSyncBadge('syncing');
   try{
     const payload = sanitizeForCloud(Object.assign({}, state, { dirty: false }));
+    // Las preferencias de pantalla (acordeón abierto, scroll, pestaña) son de
+    // cada dispositivo. Si viajaran por la nube, abrir la app en el celular
+    // pisaría cómo dejaste las tarjetas en la notebook, y viceversa.
+    delete payload.uiPrefs;
     cloudDocRef().set(payload)
       .then(() => {
         state.dirty = false;
@@ -595,6 +599,18 @@ function pushToCloud(){
   }
 }
 
+// Adopta el estado de la nube conservando las preferencias de pantalla
+// locales, que no deben viajar entre dispositivos.
+function adoptCloudState(cloud){
+  const localUiPrefs = state.uiPrefs;
+  state = reconcileState(cloud);
+  if(localUiPrefs) state.uiPrefs = localUiPrefs;
+  state.dirty = false;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  render();
+  restoreUiState();
+}
+
 // Al abrir la app: si este dispositivo tiene cambios propios sin confirmar,
 // esos cambios son los que importan — se intentan subir. Si no tiene
 // cambios pendientes, se asume que la nube puede tener algo más nuevo
@@ -608,12 +624,7 @@ function syncFromCloud(){
   }
   cloudDocRef().get().then(snap => {
     if(snap.exists){
-      const cloud = snap.data();
-      state = reconcileState(cloud);
-      state.dirty = false;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      render();
-      restoreUiState();
+      adoptCloudState(snap.data());
     } else {
       pushToCloud();
       return;
@@ -632,12 +643,7 @@ function forcePullFromCloud(){
   updateSyncBadge('syncing');
   cloudDocRef().get().then(snap => {
     if(snap.exists){
-      const cloud = snap.data();
-      state = reconcileState(cloud);
-      state.dirty = false;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      render();
-      restoreUiState();
+      adoptCloudState(snap.data());
       updateSyncBadge('ok');
     } else {
       updateSyncBadge('error');
@@ -807,16 +813,17 @@ function renderDays(){
 
   mount.innerHTML = warmupCard + dayCards + wodCard;
 
-  // restaurar qué tarjetas estaban abiertas (persistido en state.uiPrefs.openAcc)
-  const openAccKeys = new Set(state.uiPrefs.openAcc || []);
-  openAccKeys.forEach(key => {
+  // Restaurar qué tarjetas estaban abiertas. Solo se aplica el valor por
+  // defecto si nunca se guardó nada: un array vacío significa que cerraste
+  // todas a propósito y hay que respetarlo.
+  if(!Array.isArray(state.uiPrefs.openAcc)){
+    state.uiPrefs.openAcc = ['day1'];
+    saveLocalOnly();
+  }
+  new Set(state.uiPrefs.openAcc).forEach(key => {
     const card = mount.querySelector(`[data-acc="${key}"]`);
     if(card) card.classList.add('open');
   });
-  if(openAccKeys.size === 0){
-    const first = mount.querySelector('[data-acc="day1"]');
-    if(first){ first.classList.add('open'); state.uiPrefs.openAcc = ['day1']; saveLocalOnly(); }
-  }
 }
 
 function toggleFinisherDone(key){
