@@ -43,6 +43,10 @@
   .banner{background:var(--rust-dim);border:1px solid var(--rust);border-radius:8px;padding:14px 16px;margin:20px 0;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
   .banner p{margin:0;font-size:13.5px;color:var(--ink);}
   .banner p b{color:var(--rust);}
+  .banner-deload{flex-direction:column;align-items:stretch;}
+  .deload-opts{display:flex;gap:10px;flex-wrap:wrap;width:100%;}
+  .deload-opts button{flex:1;min-width:190px;text-align:left;padding:10px 14px;}
+  .deload-opts button span{display:block;font-family:'Inter',sans-serif;font-size:11px;text-transform:none;letter-spacing:0;color:var(--ink-faint);margin-top:3px;font-weight:400;}
 
   .maintabs{display:flex;gap:8px;margin:24px 0 0;flex-wrap:wrap;}
   .maintabs button.tabbtn{flex:none;border-radius:20px;}
@@ -79,6 +83,12 @@
   .exname{font-weight:700;font-size:13.5px;color:var(--ink);text-transform:uppercase;letter-spacing:0.01em;}
   .exmeta{display:block;color:var(--ink-faint);font-size:11.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;text-transform:none;}
   .pill{display:inline-block;padding:4px 11px;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;border:1px solid var(--mustard);color:var(--mustard);background:rgba(245,166,35,0.08);margin-right:6px;}
+  .ramp{margin:0 0 10px;}
+  .ramp summary{cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mustard);text-transform:uppercase;letter-spacing:0.05em;}
+  .ramp-steps{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 8px;align-items:center;}
+  .ramp-step{font-family:'IBM Plex Mono',monospace;font-size:11.5px;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:3px 10px;color:var(--ink-dim);}
+  .ramp-step.ramp-work{border-color:var(--mustard);color:var(--mustard);}
+  .ramp p{font-size:12px;color:var(--ink-faint);margin:0;}
   .pill.pending{border-color:var(--line-strong);color:var(--ink-faint);background:transparent;font-family:'Inter',sans-serif;font-weight:400;font-size:12px;}
   .exbody{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .log-box label{display:block;font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px;}
@@ -132,6 +142,27 @@
   .wod-row.wod-skipped{opacity:0.5;}
   .wod-row .day-status{flex-shrink:0;align-self:flex-start;}
 
+  .wod-prev{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px;}
+  .wod-prev-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-faint);}
+  .wod-mark{font-family:'IBM Plex Mono',monospace;font-size:11.5px;background:var(--bg);border:1px solid var(--line-strong);border-radius:20px;padding:3px 10px;color:var(--ink-dim);}
+  .wod-mark b{color:var(--mustard);font-weight:600;}
+  .wod-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .wod-inputs label{display:block;font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px;}
+
+  .wod-toolbar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+  .wod-toolbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .wod-lib-item{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
+  .wod-lib-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .wod-lib-head p{margin:0;font-size:13.5px;color:var(--ink);flex:1;min-width:220px;}
+  .wod-lib-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .wod-origen{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:2px 8px;}
+  .wod-lib-item details{margin-top:8px;}
+  .wod-lib-item summary{cursor:pointer;font-size:12px;color:var(--ink-faint);}
+
+  @media (max-width:640px){
+    .wod-inputs{grid-template-columns:1fr;}
+  }
+
   footer.foot{padding:36px 0 0;border-top:1px solid var(--line);margin-top:20px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;}
   footer.foot p{color:var(--ink-faint);font-size:12px;max-width:460px;margin:0;}
   .hidden-file{display:none;}
@@ -154,6 +185,12 @@
   .chart-block-split{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
   .chart-block canvas{max-height:280px;}
   .chart-error{color:var(--rust);font-size:13px;padding:12px 0;}
+  .ref-box{margin-top:18px;border-top:1px solid var(--line);padding-top:14px;}
+  .ref-lbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--mustard);margin-bottom:10px;}
+  .ref-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .ref-grid span{font-size:12px;color:var(--ink-dim);background:var(--surface-2);border-radius:20px;padding:3px 10px;}
+  .ref-grid b{font-family:'IBM Plex Mono',monospace;color:var(--ink);}
+  .ref-box p{font-size:12.5px;color:var(--ink-faint);margin:0;}
 
   @media (max-width:800px){
     .stat-cards{grid-template-columns:repeat(2,1fr);}
@@ -208,6 +245,8 @@
     <button class="tabbtn active" onclick="showMain('rutina', this)">Rutina de esta semana</button>
     <button class="tabbtn" onclick="showMain('historial', this)">Historial</button>
     <button class="tabbtn" onclick="showMain('estadisticas', this)">Estadísticas</button>
+    <button class="tabbtn" onclick="showMain('wods', this)">WODs</button>
+    <button class="tabbtn" onclick="showMain('rm', this)">Marcas / RM</button>
   </div>
 
   <div id="panel-rutina" class="panel active">
@@ -227,6 +266,39 @@
     </div>
     <h2 style="font-size:18px;margin:32px 0 16px;">Historial de semanas</h2>
     <div id="histMount"></div>
+  </div>
+
+  <div id="panel-wods" class="panel">
+    <div class="wod-toolbar">
+      <div>
+        <h2 style="font-size:18px;margin-bottom:4px;">Biblioteca de metabólicos</h2>
+        <p class="chart-note" style="margin:0;">De acá salen los WODs que te asigna la app cada semana. Podés agregar, editar y borrar.</p>
+      </div>
+      <div class="wod-toolbar-actions">
+        <button class="small primary" onclick="addWod()">Agregar WOD</button>
+        <button class="small" onclick="exportWods()">Exportar</button>
+        <button class="small" onclick="document.getElementById('wodFileInput').click()">Importar</button>
+        <input type="file" id="wodFileInput" class="hidden-file" accept="application/json" onchange="importWods(event)">
+      </div>
+    </div>
+    <div id="wodLibMount"></div>
+  </div>
+
+  <div id="panel-rm" class="panel">
+    <div class="wod-toolbar">
+      <div>
+        <h2 style="font-size:18px;margin-bottom:4px;">Marcas y máximos</h2>
+        <p class="chart-note" style="margin:0;">Anotá tus RM reales. El 1RM estimado sale de la fórmula de Epley, que permite comparar marcas hechas con distintas reps.</p>
+      </div>
+      <div class="wod-toolbar-actions">
+        <button class="small primary" onclick="addRM()">Registrar marca</button>
+      </div>
+    </div>
+    <div id="rmMount"></div>
+
+    <h2 style="font-size:18px;margin:32px 0 4px;">1RM estimado según tu entrenamiento</h2>
+    <p class="chart-note" style="margin-bottom:16px;">Calculado automáticamente desde los top sets que vas cerrando cada semana. No hace falta que testees el máximo para ver si estás progresando.</p>
+    <div id="e1rmMount"></div>
   </div>
 
   <div id="panel-estadisticas" class="panel">
@@ -258,6 +330,21 @@
         <h3>Progresión de tus levantamientos principales</h3>
         <p class="chart-note">Peso logrado semana a semana en los 4 movimientos de fuerza más pesados del programa.</p>
         <canvas id="chartMainLifts" height="110"></canvas>
+      </div>
+
+      <div class="chart-block">
+        <h3>Series semanales por grupo muscular</h3>
+        <p class="chart-note">Series efectivas que tiene planificada tu semana actual. Es la métrica que usaba Tomás para dosificar el volumen — abajo están sus números de referencia.</p>
+        <canvas id="chartSetsMuscle" height="110"></canvas>
+        <div class="ref-box">
+          <div class="ref-lbl">Referencia histórica — semana 98 (etapa de 4 días)</div>
+          <div class="ref-grid">
+            <span>Pecho <b>21</b></span><span>Glúteo <b>20</b></span><span>Cuádriceps <b>19</b></span>
+            <span>Isquios <b>18</b></span><span>Tríceps <b>17</b></span><span>Hombros <b>15</b></span>
+            <span>Bíceps <b>15</b></span><span>Dorsales <b>14</b></span><span>Gemelo <b>8</b></span>
+          </div>
+          <p>En sus semanas de descarga bajaba estas series alrededor de un 30% (pecho 21→13, dorsales 14→9) y el tonelaje un 33%. Ojo que sus categorías no son idénticas a las de acá: él separaba glúteo de isquios, y tríceps de bíceps.</p>
+        </div>
       </div>
 
       <div class="chart-block chart-block-split">
@@ -329,14 +416,19 @@ function defaultState(){
     lastDeloadWeek: null,
     deloadDue: false,
     pendingDeload: false,
+    deloadPct: null,
     uiPrefs: { openAcc: ['day1'], scrollY: 0, activeTab: 'rutina' },
     updatedAt: Date.now(),
     dirty: false,
     draftLog: {},
     dayClosed: { 1:false, 2:false, 3:false, 4:false },
     finisherStatus: { day2:{done:false, note:''}, day4:{done:false, note:''} },
-    currentFinishers: { day2: pickRandom(FINISHER_POOLS.day2), day4: pickRandom(FINISHER_POOLS.day4) },
-    finisherHistory: { day2: [], day4: [] },
+    wodLibrary: DEFAULT_WOD_LIBRARY.map(w => Object.assign({}, w)),
+    wodResults: {},
+    wodRecent: [],
+    rmLog: [],
+    wodLibraryVersion: WOD_LIBRARY_VERSION,
+    currentFinishers: { day2: { id:'w08', text: DEFAULT_WOD_LIBRARY[7].text }, day4: { id:'w09', text: DEFAULT_WOD_LIBRARY[8].text } },
     history: [],
     days: [
       { id:1, title:'Día 1', pattern:'Piernas A', icon:'🦵', color:'red', exercises:[
@@ -425,37 +517,63 @@ const WARMUP_ITEMS = [
   {name:'Plancha dinámica', srs:'3 × 5'},
 ];
 
-const FINISHER_POOLS = {
-  day2: [
-    "EMOM 12' — min1: 12 push ups · min2: 20 goblet squat [16kg] · min3: 24 jumping lunges",
-    "AMRAP 12' — 3 burpees / 6 sit ups / 9 air squat",
-    "3 rondas: 400m trote + 12 burpees + 25 sit ups",
-    "21-15-9: burpees / KB swing [16kg] / sit ups",
-    "Tabata 8x20\"/10\" en bici o remo",
-    "EMOM 16' rotando 4 ejercicios cortos"
-  ],
-  day4: [
-    "21-15-9: burpees / KB swing [16kg] / sit ups",
-    "A completar: 60 KB swing [16kg] / 50 push ups / 40 sit ups / 30 burpees / 200 jumping jacks",
-    "EMOM 12' — goblet squat + walking lunges + sit ups + plancha",
-    "5 rondas cortas: 10 burpees + 15 air squat",
-    "Chipper acumulativo: 100-80-60-40-20 (air squat / sit ups / estocadas / push ups / burpees)"
-  ]
-};
+// Biblioteca de metabólicos. Los 10 primeros son los que aparecen en las
+// planillas de Tomás entre la semana 355 y la 375 (antes de la 355 el
+// programa no incluía metabólicos). Se pueden editar, borrar e importar.
+const DEFAULT_WOD_LIBRARY = [
+  { id:'w01', text:"AMRAP 9' — 9 jumping jacks / 6 saltos rodilla al pecho / 3 burpees", origen:'S355' },
+  { id:'w02', text:"EMOM 12' — min1: 10 goblet squat [20kg] · min2: 12 walking lunges · min3: 15 sit ups · min4: 30\" plancha", origen:'S357' },
+  { id:'w03', text:"AMRAP 12' — 3 push ups / 6 estocadas con salto / 12 jumping jacks", origen:'S359' },
+  { id:'w04', text:"EMOM 18' — 5 burpees / 6 air squat / 7 sit ups", origen:'S359' },
+  { id:'w05', text:"AMRAP 12' — 6 thrusters con mancuerna / 4 push ups / 2 burpees", origen:'S363' },
+  { id:'w06', text:"3 rondas 30-20-10 — burpees / air squat / sit ups", origen:'S363' },
+  { id:'w07', text:"Chipper: 100 air squat / 80 sit ups / 60 estocadas / 40 push ups / 20 burpees", origen:'S364' },
+  { id:'w08', text:"EMOM 12' — min1: 12 push ups · min2: 20 goblet squat [16kg] · min3: 24 jumping lunges", origen:'S366' },
+  { id:'w09', text:"21-15-9 — burpees / KB swing [16kg] / sit ups", origen:'S366' },
+  { id:'w10', text:"3 rondas: 400m run + 12 burpees + 25 sit ups", origen:'S370' },
+  { id:'w11', text:"A completar: 60 KB swing [16kg] / 50 push ups / 40 sit ups / 30 burpees / 200 jumping jacks", origen:'S370' },
+  { id:'w12', text:"AMRAP 12' — 3 burpees / 6 sit ups / 9 sentadilla de aire", origen:'S375' },
+  // Trabajo aeróbico y de potencia de la etapa 224-240 del programa
+  { id:'w13', text:"Sesión de trote — 8 rondas del circuito A→B→C→D: caminar 5m, correr 10m al 85%, caminar 5m; ida y vuelta = 1 ronda", origen:'S224' },
+  { id:'w14', text:"Pasadas — 2 x 1700m a RPE 7 (intensidad moderada, acumular trabajo). Descanso 60-90\" entre pasadas", origen:'S240' },
+  { id:'w15', text:"Día opcional potencia/resistencia — peso muerto a 1 pierna 2x8 · hip thrust a 1 pierna 2x6 · plancha copenhague 3x20\"", origen:'S224' },
+];
+
+// Se incrementa cuando se suman WODs nuevos a la biblioteca por defecto, para
+// poder agregarlos a bibliotecas ya guardadas sin pisar las ediciones propias.
+const WOD_LIBRARY_VERSION = 2;
 
 function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-function pickFinisher(dayKey, state){
-  const pool = FINISHER_POOLS[dayKey];
-  const recent = state.finisherHistory[dayKey] || [];
-  let candidates = pool.filter(f => !recent.includes(f));
-  if(candidates.length === 0) candidates = pool.filter(f => f !== recent[recent.length-1]);
-  if(candidates.length === 0) candidates = pool;
+// Elige un WOD de la biblioteca evitando los usados hace poco y el que ya
+// salió sorteado para el otro metabólico de esta misma semana.
+function pickWod(st, excludeIds){
+  const lib = (st.wodLibrary && st.wodLibrary.length) ? st.wodLibrary : DEFAULT_WOD_LIBRARY;
+  const recent = st.wodRecent || [];
+  const excl = new Set([...(excludeIds||[]), ...recent]);
+  let candidates = lib.filter(w => !excl.has(w.id));
+  if(candidates.length === 0) candidates = lib.filter(w => !(excludeIds||[]).includes(w.id));
+  if(candidates.length === 0) candidates = lib;
   const chosen = pickRandom(candidates);
-  recent.push(chosen);
-  if(recent.length > 2) recent.shift();
-  state.finisherHistory[dayKey] = recent;
-  return chosen;
+  return { id: chosen.id, text: chosen.text };
+}
+
+function rollWeeklyWods(st){
+  const a = pickWod(st, []);
+  const b = pickWod(st, [a.id]);
+  st.wodRecent = [a.id, b.id].concat(st.wodRecent || []).slice(0, 4);
+  return { day2: a, day4: b };
+}
+
+function wodById(id){
+  const lib = state.wodLibrary || DEFAULT_WOD_LIBRARY;
+  return lib.find(w => w.id === id) || null;
+}
+
+// Marcas anteriores de un WOD, más recientes primero.
+function wodResultsFor(id){
+  const all = (state.wodResults && state.wodResults[id]) || [];
+  return all.slice().sort((a,b) => b.week - a.week);
 }
 
 let state = loadState();
@@ -495,6 +613,36 @@ function reconcileState(saved){
   if(!merged.draftLog) merged.draftLog = {};
   if(!merged.dayClosed) merged.dayClosed = { 1:false, 2:false, 3:false, 4:false };
   if(!merged.finisherStatus) merged.finisherStatus = { day2:{done:false, note:''}, day4:{done:false, note:''} };
+  if(!Array.isArray(merged.wodLibrary) || merged.wodLibrary.length === 0){
+    merged.wodLibrary = DEFAULT_WOD_LIBRARY.map(w => Object.assign({}, w));
+  }
+  // Sumar WODs nuevos que se hayan agregado a la biblioteca por defecto,
+  // sin tocar los editados ni resucitar los que el usuario borró a mano.
+  if((merged.wodLibraryVersion || 1) < WOD_LIBRARY_VERSION){
+    const existentes = new Set(merged.wodLibrary.map(w => w.id));
+    DEFAULT_WOD_LIBRARY.forEach(w => {
+      if(!existentes.has(w.id)) merged.wodLibrary.push(Object.assign({}, w));
+    });
+    merged.wodLibraryVersion = WOD_LIBRARY_VERSION;
+  }
+  if(!Array.isArray(merged.rmLog)) merged.rmLog = [];
+  if(!merged.wodResults) merged.wodResults = {};
+  if(!Array.isArray(merged.wodRecent)) merged.wodRecent = [];
+  // Antes los metabólicos se guardaban como texto suelto. Ahora son {id,text}
+  // para poder asociarles marcas. Se convierten buscando el texto en la
+  // biblioteca; si no está, se agrega para no perderlo.
+  ['day2','day4'].forEach(k => {
+    const cur = merged.currentFinishers && merged.currentFinishers[k];
+    if(typeof cur === 'string'){
+      let found = merged.wodLibrary.find(w => w.text === cur);
+      if(!found){
+        found = { id: 'w' + Date.now().toString(36) + k, text: cur, origen:'importado' };
+        merged.wodLibrary.push(found);
+      }
+      merged.currentFinishers[k] = { id: found.id, text: found.text };
+    }
+  });
+  delete merged.finisherHistory;
   return merged;
 }
 
@@ -688,6 +836,39 @@ function targetText(exr){
   return `<span class="pill">${exr.currentWeight ?? '—'}kg × ${exr.currentRepTarget ?? '—'}</span>`;
 }
 
+// Ejercicios pesados que merecen rampa de aproximación.
+const RAMP_LIFTS = ['d1e1','d2e1','d3e1','d3e2','d4e2','d4e3'];
+
+// Series de aproximación como % del peso de trabajo del día. Los escalones se
+// achican cerca del tope: cerca del máximo el sistema nervioso necesita pasos
+// chicos, y los saltos grandes son donde se rompe la técnica.
+const RAMP_STEPS = [
+  { pct:0.40, reps:8 },
+  { pct:0.55, reps:5 },
+  { pct:0.70, reps:3 },
+  { pct:0.85, reps:2 },
+  { pct:0.95, reps:1 },
+];
+
+function rampFor(exr, pesoTrabajo){
+  if(!RAMP_LIFTS.includes(exr.id)) return '';
+  if(pesoTrabajo == null || isNaN(pesoTrabajo) || pesoTrabajo <= 0) return '';
+  const step = exr.weightStep && exr.weightStep >= 2.5 ? 2.5 : 2.5;
+  const pasos = RAMP_STEPS
+    .map(s => ({ w: Math.round((pesoTrabajo * s.pct) / step) * step, reps: s.reps }))
+    .filter((s, i, arr) => s.w > 20 && (i === 0 || s.w > arr[i-1].w));
+  if(pasos.length === 0) return '';
+  return `<details class="ramp">
+    <summary>Entrada en calor — series de aproximación</summary>
+    <div class="ramp-steps">
+      <span class="ramp-step">barra × 10</span>
+      ${pasos.map(p => `<span class="ramp-step">${p.w}kg × ${p.reps}</span>`).join('')}
+      <span class="ramp-step ramp-work">${pesoTrabajo}kg → serie efectiva</span>
+    </div>
+    <p>Descansá poco abajo (30-60") y más arriba (2-3'). No pases del último escalón: subir más ya es trabajo pesado, no calentamiento.</p>
+  </details>`;
+}
+
 function exSetsSummary(exr){
   const pattern = exr.setPattern || [0];
   if(exr.type === 'time') return `${pattern.length} series`;
@@ -743,6 +924,7 @@ function renderDays(){
           </span>
         </div>
         <div style="margin-bottom:10px;">${targetText(exr)}</div>
+        ${rampFor(exr, wVal)}
         ${inputs}
       </div>`;
     }).join('');
@@ -781,17 +963,29 @@ function renderDays(){
   // Los metabólicos van en su propia tarjeta: se pueden hacer cualquier día
   // de la semana (por ejemplo los dos juntos un sábado), no atados al día 2 y 4.
   const wods = ['day2','day4'].map((key, i) => {
-    const st = state.finisherStatus[key] || {done:false, note:''};
+    const st = state.finisherStatus[key] || {done:false, note:'', result:''};
+    const cur = state.currentFinishers[key] || {id:'', text:''};
+    const prev = wodResultsFor(cur.id).slice(0, 3);
+    const prevHtml = prev.length
+      ? `<div class="wod-prev"><span class="wod-prev-lbl">Marcas anteriores</span>${prev.map(r => `<span class="wod-mark">S${r.week}: <b>${r.value}</b></span>`).join('')}</div>`
+      : `<div class="wod-prev"><span class="wod-prev-lbl">Primera vez que te toca este</span></div>`;
     return `<div class="wod-item">
       <div class="wod-item-head">
         <label class="wod-check">
           <input type="checkbox" ${st.done ? 'checked' : ''} onchange="toggleFinisherDone('${key}')">
           <span>Metabólico ${i+1}</span>
         </label>
-        ${st.done ? '<span class="day-status done">Hecho</span>' : '<span class="day-status">Pendiente</span>'}
+        <span style="display:flex;gap:8px;align-items:center;">
+          <button class="small" onclick="rerollWod('${key}')">Cambiar</button>
+          ${st.done ? '<span class="day-status done">Hecho</span>' : '<span class="day-status">Pendiente</span>'}
+        </span>
       </div>
-      <p>${state.currentFinishers[key]}</p>
-      <input type="text" placeholder="Cuándo lo hiciste / cómo salió (opcional)" value="${(st.note||'').replace(/"/g,'&quot;')}" oninput="setFinisherNote('${key}', this.value)">
+      <p>${cur.text}</p>
+      ${prevHtml}
+      <div class="wod-inputs">
+        <label>Tu marca (tiempo o reps)<input type="text" placeholder="ej: 12:45 · 5 rondas + 8" value="${(st.result||'').replace(/"/g,'&quot;')}" oninput="setFinisherField('${key}','result',this.value)"></label>
+        <label>Nota (opcional)<input type="text" placeholder="cuándo lo hiciste, cómo salió" value="${(st.note||'').replace(/"/g,'&quot;')}" oninput="setFinisherField('${key}','note',this.value)"></label>
+      </div>
     </div>`;
   }).join('');
 
@@ -806,7 +1000,7 @@ function renderDays(){
       <span class="acc-meta">${doneCount}/2 hechos <span class="chevron">▾</span></span>
     </button>
     <div class="acc-body">
-      <p class="chart-note" style="margin-bottom:14px;">Los dos WODs de la semana. Hacelos el día que te quede cómodo — juntos o separados. La app elige formatos distintos a los de las últimas 2 semanas.</p>
+      <p class="chart-note" style="margin-bottom:14px;">Los dos WODs de la semana. Hacelos el día que te quede cómodo — juntos o separados. Anotá tu marca para poder compararte cuando el mismo WOD vuelva a salir.</p>
       ${wods}
     </div>
   </div>`;
@@ -834,13 +1028,23 @@ function toggleFinisherDone(key){
   renderDays();
 }
 
-let finisherNoteTimeout = null;
-function setFinisherNote(key, value){
-  const st = state.finisherStatus[key] || {done:false, note:''};
-  st.note = value;
+let finisherFieldTimeout = null;
+function setFinisherField(key, field, value){
+  const st = state.finisherStatus[key] || {done:false, note:'', result:''};
+  st[field] = value;
   state.finisherStatus[key] = st;
-  clearTimeout(finisherNoteTimeout);
-  finisherNoteTimeout = setTimeout(() => saveState(), 600);
+  clearTimeout(finisherFieldTimeout);
+  finisherFieldTimeout = setTimeout(() => saveState(), 600);
+}
+
+// Sortea de nuevo este metabólico (por ejemplo si no tenés el equipamiento).
+function rerollWod(key){
+  const other = key === 'day2' ? 'day4' : 'day2';
+  const otherId = (state.currentFinishers[other] || {}).id;
+  const currentId = (state.currentFinishers[key] || {}).id;
+  state.currentFinishers[key] = pickWod(state, [otherId, currentId]);
+  saveState();
+  renderDays();
 }
 
 // Cierra un día: congela lo cargado y aplica la progresión SOLO de ese día.
@@ -896,10 +1100,14 @@ function showMain(name, btn){
   document.getElementById('panel-rutina').classList.toggle('active', name==='rutina');
   document.getElementById('panel-historial').classList.toggle('active', name==='historial');
   document.getElementById('panel-estadisticas').classList.toggle('active', name==='estadisticas');
+  document.getElementById('panel-wods').classList.toggle('active', name==='wods');
+  document.getElementById('panel-rm').classList.toggle('active', name==='rm');
   state.uiPrefs.activeTab = name;
   saveLocalOnly();
   if(name === 'historial'){ renderHistory(); renderWodHistory(); }
   if(name === 'estadisticas') renderStats();
+  if(name === 'wods') renderWodLibrary();
+  if(name === 'rm') renderRM();
 }
 
 function findExercise(id){
@@ -1008,18 +1216,31 @@ function closeWeek(){
     weekNumber: state.weekNumber,
     date: new Date().toLocaleDateString('es-AR'),
     deload: state.pendingDeload,
+    deloadPct: state.pendingDeload ? (state.deloadPct || 15) : null,
     entries,
     daysDone: state.days.filter(d => state.dayClosed[d.id]).map(d => d.id),
     finishers: { day2: state.currentFinishers.day2, day4: state.currentFinishers.day4 },
     finisherStatus: JSON.parse(JSON.stringify(state.finisherStatus))
   });
 
+  // Guardar las marcas de los metabólicos hechos, para poder compararse
+  // la próxima vez que salga el mismo WOD.
+  ['day2','day4'].forEach(k => {
+    const st = state.finisherStatus[k] || {};
+    const cur = state.currentFinishers[k] || {};
+    if(st.done && st.result && cur.id){
+      if(!state.wodResults[cur.id]) state.wodResults[cur.id] = [];
+      state.wodResults[cur.id].push({ week: state.weekNumber, value: st.result, note: st.note || '' });
+    }
+  });
+
   if(state.pendingDeload){
     state.lastDeloadWeek = state.weekNumber;
   }
   state.pendingDeload = false;
+  state.deloadPct = null;
   state.weekNumber += 1;
-  state.currentFinishers = { day2: pickFinisher('day2', state), day4: pickFinisher('day4', state) };
+  state.currentFinishers = rollWeeklyWods(state);
 
   const weeksSinceDeload = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
   state.deloadDue = weeksSinceDeload >= 8;
@@ -1027,7 +1248,7 @@ function closeWeek(){
   state.uiPrefs.scrollY = 0;
   state.draftLog = {};
   state.dayClosed = { 1:false, 2:false, 3:false, 4:false };
-  state.finisherStatus = { day2:{done:false, note:''}, day4:{done:false, note:''} };
+  state.finisherStatus = { day2:{done:false, note:'', result:''}, day4:{done:false, note:'', result:''} };
   saveState(true);
   render();
   window.scrollTo({top:0, behavior:'smooth'});
@@ -1046,39 +1267,286 @@ function editWeekNumber(){
   render();
 }
 
-function markDeload(){
+// pct = cuánto se baja la carga. 15 = descarga suave (mantiene el patrón
+// motor y descansa articulaciones), 30 = descarga profunda para cuando venís
+// muy acumulado. En cualquier caso los objetivos NO se recalculan al cerrar
+// la semana: la descarga no te hace perder los pesos de trabajo.
+function markDeload(pct){
   state.pendingDeload = true;
+  state.deloadPct = pct;
+  const factor = (100 - pct) / 100;
   state.days.forEach(day => {
     day.exercises.forEach(exr => {
       if(exr.type === 'weight' && exr.currentWeight != null){
         const wInput = document.getElementById('w-'+exr.id);
         const rInput = document.getElementById('r-'+exr.id);
-        const w = round(exr.currentWeight * 0.85, exr.weightStep);
+        const w = round(exr.currentWeight * factor, exr.weightStep);
         if(wInput) wInput.value = w;
         if(rInput) rInput.value = exr.repFloor;
         state.draftLog[exr.id] = { weight: w, reps: exr.repFloor };
       }
       if(exr.type === 'time' && exr.currentWeight != null){
         const wInput = document.getElementById('w-'+exr.id);
-        const w = Math.max(10, exr.currentWeight - 10);
+        const w = Math.max(10, Math.round(exr.currentWeight * factor));
         if(wInput) wInput.value = w;
         state.draftLog[exr.id] = { weight: w };
       }
     });
   });
   saveState(true);
+  renderDays();
+  renderDeloadBanner();
+}
+
+function cancelDeload(){
+  if(!confirm('Cancelar la descarga y volver a los pesos normales de esta semana?')) return;
+  state.pendingDeload = false;
+  state.deloadPct = null;
+  state.draftLog = {};
+  saveState(true);
+  renderDays();
   renderDeloadBanner();
 }
 
 function renderDeloadBanner(){
   const mount = document.getElementById('deloadBanner');
-  if(!state.deloadDue){ mount.innerHTML = ''; return; }
+  if(!state.deloadDue && !state.pendingDeload){ mount.innerHTML = ''; return; }
   if(state.pendingDeload){
-    mount.innerHTML = `<div class="banner"><p>Esta semana está marcada como <b>descarga</b>. Los pesos de arriba ya se ajustaron ~15% abajo — entrená con eso y cerrá la semana normal.</p></div>`;
+    const pct = state.deloadPct || 15;
+    mount.innerHTML = `<div class="banner"><p>Semana marcada como <b>descarga ${pct === 30 ? 'profunda' : 'suave'}</b>. Los pesos de arriba ya bajaron un ${pct}%. Entrená con eso y cerrá la semana normal: tus objetivos quedan intactos.</p><button class="small" onclick="cancelDeload()">Cancelar descarga</button></div>`;
     return;
   }
   const weeksSince = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
-  mount.innerHTML = `<div class="banner"><p>Llevás <b>${weeksSince} semanas</b> sin descarga. Si te sentís cargado, marcá esta semana como descarga antes de entrenar.</p><button class="small" onclick="markDeload()">Marcar esta semana como descarga</button></div>`;
+  mount.innerHTML = `<div class="banner banner-deload">
+    <p>Llevás <b>${weeksSince} semanas</b> sin descarga. Si venís cargado, elegí una antes de entrenar.</p>
+    <div class="deload-opts">
+      <button class="small" onclick="markDeload(15)">Suave −15%<span>descansa articulaciones, mantiene el patrón</span></button>
+      <button class="small" onclick="markDeload(30)">Profunda −30%<span>para cuando venís muy acumulado</span></button>
+    </div>
+  </div>`;
+}
+
+// Epley: estima el 1RM a partir de un peso levantado por N reps.
+// Con 1 rep devuelve el peso tal cual. Pierde precisión arriba de ~10 reps.
+function e1rm(weight, reps){
+  if(!weight || !reps) return null;
+  if(reps === 1) return weight;
+  return Math.round(weight * (1 + reps/30) * 10) / 10;
+}
+
+const RM_LIFTS = ['Sentadilla','Peso muerto','Press banca','Press militar','Remo con barra','Hip thrust'];
+
+function renderRM(){
+  const mount = document.getElementById('rmMount');
+  const log = state.rmLog || [];
+  if(log.length === 0){
+    mount.innerHTML = '<p style="color:var(--ink-dim);font-size:14px;">Todavía no registraste ninguna marca. Usá "Registrar marca" para cargar la primera.</p>';
+  } else {
+    // Agrupar por ejercicio, mejor e1RM primero
+    const porLift = {};
+    log.forEach(r => { (porLift[r.lift] = porLift[r.lift] || []).push(r); });
+    mount.innerHTML = Object.keys(porLift).sort().map(lift => {
+      const rows = porLift[lift].slice().sort((a,b) => (b.e || 0) - (a.e || 0));
+      const best = rows[0];
+      return `<div class="wod-lib-item">
+        <div class="wod-lib-head">
+          <p><b>${lift}</b> — mejor marca: <span class="pill">${best.weight}kg × ${best.reps}</span>
+             ${best.reps > 1 ? `<span class="wod-origen">1RM est. ${best.e}kg</span>` : '<span class="wod-origen">RM real</span>'}</p>
+        </div>
+        <details><summary>Todas las marcas (${rows.length})</summary>
+          <table class="histtable" style="margin-top:8px;">
+            ${rows.map(r => `<tr>
+              <td>${r.weight}kg × ${r.reps}${r.note ? ' <span style="color:var(--ink-faint);font-style:italic;">· '+r.note+'</span>' : ''}</td>
+              <td>S${r.week} · est. ${r.e}kg <button class="small danger" style="margin-left:8px;" onclick="deleteRM('${r.id}')">×</button></td>
+            </tr>`).join('')}
+          </table>
+        </details>
+      </div>`;
+    }).join('');
+  }
+  renderE1RM();
+}
+
+// 1RM estimado a partir de los top sets cerrados semana a semana.
+function renderE1RM(){
+  const mount = document.getElementById('e1rmMount');
+  const hist = state.history || [];
+  if(hist.length === 0){
+    mount.innerHTML = '<p style="color:var(--ink-dim);font-size:14px;">Vas a ver esto cuando cierres tu primera semana.</p>';
+    return;
+  }
+  const filas = MAIN_LIFTS.map(l => {
+    const puntos = hist.map(w => {
+      const e = w.entries[l.id];
+      if(!e || e.skipped || e.weight == null || e.reps == null) return null;
+      return { week: w.weekNumber, est: e1rm(e.weight, e.reps), peso: e.weight, reps: e.reps };
+    }).filter(Boolean);
+    if(puntos.length === 0) return '';
+    const ult = puntos[puntos.length-1];
+    const mejor = puntos.reduce((a,b) => b.est > a.est ? b : a);
+    const delta = puntos.length > 1 ? (ult.est - puntos[0].est) : 0;
+    return `<div class="wod-lib-item">
+      <div class="wod-lib-head">
+        <p><b>${l.label}</b> — último: <span class="pill">${ult.est}kg est.</span>
+           <span class="wod-origen">de ${ult.peso}kg × ${ult.reps}</span></p>
+        <span class="wod-lib-actions">
+          <span class="wod-origen">mejor ${mejor.est}kg (S${mejor.week})</span>
+          ${delta !== 0 ? `<span class="day-status ${delta>0?'done':''}">${delta>0?'+':''}${Math.round(delta*10)/10}kg</span>` : ''}
+        </span>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+  mount.innerHTML = filas || '<p style="color:var(--ink-dim);font-size:14px;">Todavía no hay top sets registrados.</p>';
+}
+
+function addRM(){
+  const lift = prompt('¿Qué ejercicio?\n\nSugeridos: ' + RM_LIFTS.join(' · '));
+  if(!lift || !lift.trim()) return;
+  const peso = parseFloat((prompt('¿Cuántos kg?') || '').replace(',','.'));
+  if(isNaN(peso) || peso <= 0){ alert('Peso inválido.'); return; }
+  const reps = parseInt(prompt('¿Cuántas reps? (1 si fue un máximo real)') || '');
+  if(isNaN(reps) || reps < 1){ alert('Reps inválidas.'); return; }
+  const note = prompt('Nota (opcional): cómo salió, si fue con ayuda, etc.') || '';
+  state.rmLog.push({
+    id: 'rm' + Date.now().toString(36),
+    lift: lift.trim(), weight: peso, reps, note: note.trim(),
+    week: state.weekNumber, e: e1rm(peso, reps)
+  });
+  saveState(true);
+  renderRM();
+}
+
+function deleteRM(id){
+  if(!confirm('¿Borrar esta marca?')) return;
+  state.rmLog = (state.rmLog || []).filter(r => r.id !== id);
+  saveState(true);
+  renderRM();
+}
+
+function renderWodLibrary(){
+  const mount = document.getElementById('wodLibMount');
+  const lib = state.wodLibrary || [];
+  const inUse = ['day2','day4'].map(k => (state.currentFinishers[k]||{}).id);
+  if(lib.length === 0){
+    mount.innerHTML = '<p style="color:var(--ink-dim);font-size:14px;">La biblioteca está vacía. Agregá al menos un WOD.</p>';
+    return;
+  }
+  mount.innerHTML = lib.map(w => {
+    const res = wodResultsFor(w.id);
+    const marks = res.length
+      ? `<table class="histtable" style="margin:10px 0 0;">${res.map(r => `<tr><td>Semana ${r.week}</td><td>${r.value}${r.note ? ' <span style="color:var(--ink-faint);font-style:italic;">· '+r.note+'</span>' : ''}</td></tr>`).join('')}</table>`
+      : '<p class="chart-note" style="margin:8px 0 0;">Sin marcas registradas todavía.</p>';
+    const badge = inUse.includes(w.id) ? '<span class="day-status done">Esta semana</span>' : '';
+    const origen = w.origen ? `<span class="wod-origen">${w.origen}</span>` : '';
+    return `<div class="wod-lib-item">
+      <div class="wod-lib-head">
+        <p>${w.text}</p>
+        <span class="wod-lib-actions">
+          ${badge}${origen}
+          <button class="small" onclick="editWod('${w.id}')">Editar</button>
+          <button class="small danger" onclick="deleteWod('${w.id}')">Borrar</button>
+        </span>
+      </div>
+      <details><summary>Marcas (${res.length})</summary>${marks}</details>
+    </div>`;
+  }).join('');
+}
+
+function addWod(){
+  const text = prompt('Escribí el WOD nuevo:\n\nEjemplo: AMRAP 10\' — 5 burpees / 10 air squat / 15 sit ups');
+  if(!text || !text.trim()) return;
+  state.wodLibrary.push({ id: 'w' + Date.now().toString(36), text: text.trim(), origen: 'propio' });
+  saveState(true);
+  renderWodLibrary();
+}
+
+function editWod(id){
+  const w = (state.wodLibrary || []).find(x => x.id === id);
+  if(!w) return;
+  const text = prompt('Editar WOD:', w.text);
+  if(text === null || !text.trim()) return;
+  w.text = text.trim();
+  // Si está asignado esta semana, actualizar también el texto mostrado.
+  ['day2','day4'].forEach(k => {
+    if(state.currentFinishers[k] && state.currentFinishers[k].id === id){
+      state.currentFinishers[k].text = w.text;
+    }
+  });
+  saveState(true);
+  renderWodLibrary();
+  renderDays();
+}
+
+function deleteWod(id){
+  const res = wodResultsFor(id);
+  const extra = res.length ? `\n\nOjo: tiene ${res.length} marca(s) registrada(s), que también se borran.` : '';
+  if(!confirm('¿Borrar este WOD de la biblioteca?' + extra)) return;
+  state.wodLibrary = (state.wodLibrary || []).filter(w => w.id !== id);
+  delete state.wodResults[id];
+  // Si estaba asignado esta semana, sortear otro en su lugar.
+  ['day2','day4'].forEach(k => {
+    if(state.currentFinishers[k] && state.currentFinishers[k].id === id){
+      const other = k === 'day2' ? 'day4' : 'day2';
+      state.currentFinishers[k] = pickWod(state, [(state.currentFinishers[other]||{}).id]);
+    }
+  });
+  saveState(true);
+  renderWodLibrary();
+  renderDays();
+}
+
+function exportWods(){
+  const payload = {
+    formato: 'rutina-santiago-wods',
+    version: 1,
+    exportado: new Date().toISOString(),
+    wodLibrary: state.wodLibrary || [],
+    wodResults: state.wodResults || {}
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `wods-semana-${state.weekNumber}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Importa sumando: no pisa la biblioteca actual ni borra marcas existentes.
+function importWods(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const parsed = JSON.parse(e.target.result);
+      const incoming = Array.isArray(parsed) ? parsed : parsed.wodLibrary;
+      if(!Array.isArray(incoming)) throw new Error('Formato inválido');
+      let added = 0, skipped = 0;
+      incoming.forEach(w => {
+        const text = (typeof w === 'string') ? w : w.text;
+        if(!text || !text.trim()) return;
+        if((state.wodLibrary || []).some(x => x.text.trim() === text.trim())){ skipped++; return; }
+        const id = 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+        state.wodLibrary.push({ id, text: text.trim(), origen: (w && w.origen) || 'importado' });
+        // Traer también las marcas si vienen con el archivo.
+        if(parsed.wodResults && w.id && parsed.wodResults[w.id]){
+          state.wodResults[id] = parsed.wodResults[w.id];
+        }
+        added++;
+      });
+      saveState(true);
+      renderWodLibrary();
+      alert(`Importados: ${added}\nOmitidos por estar repetidos: ${skipped}`);
+    }catch(err){
+      console.error(err);
+      alert('No se pudo leer ese archivo. Tiene que ser un JSON exportado desde esta app, o una lista de textos.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 function renderWodHistory(){
@@ -1094,8 +1562,8 @@ function renderWodHistory(){
       const s = st[key] || {};
       rows.push({
         weekNumber: week.weekNumber, label, color,
-        text: week.finishers[key],
-        done: s.done, note: s.note,
+        text: (week.finishers[key] && week.finishers[key].text) || week.finishers[key],
+        done: s.done, note: s.note, result: s.result,
         hasStatus: !!week.finisherStatus
       });
     });
@@ -1103,11 +1571,12 @@ function renderWodHistory(){
   mount.innerHTML = rows.map(r => {
     const badge = !r.hasStatus ? ''
       : (r.done ? '<span class="day-status done">Hecho</span>' : '<span class="day-status">No hecho</span>');
+    const marca = r.result ? `<span class="wod-mark" style="margin-top:6px;display:inline-block;">Marca: <b>${r.result}</b></span>` : '';
     const note = r.note ? `<span class="wod-note">${r.note}</span>` : '';
     return `
     <div class="wod-row wod-${r.color}${r.hasStatus && !r.done ? ' wod-skipped' : ''}">
       <div class="wod-tag">S${r.weekNumber}<br>${r.label}</div>
-      <p>${r.text}${note}</p>
+      <p>${r.text}${note}<br>${marca}</p>
       ${badge}
     </div>
   `;
@@ -1132,7 +1601,7 @@ function renderHistory(){
       ? `<p class="histfin">Días entrenados: ${daysDone.length ? daysDone.map(n => 'Día '+n).join(', ') : 'ninguno'}${daysDone.length < 4 ? ' · faltaron ' + (4 - daysDone.length) : ''}</p>`
       : '';
     return `<details class="histrow">
-      <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?'<span class="badge-deload">Descarga</span>':''}</summary>
+      <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?`<span class="badge-deload">Descarga −${week.deloadPct || 15}%</span>`:''}</summary>
       ${daysLabel}
       <table class="histtable">${rows}</table>
     </details>`;
@@ -1308,6 +1777,24 @@ function renderStats(){
     data:{ labels, datasets: stats.mainLiftsSeries.map((s,i) => ({
       label:s.label, data:s.data, borderColor:liftColors[i], backgroundColor:liftColors[i], spanGaps:true, tension:0.2
     })) },
+    options: CHART_BASE
+  });
+
+  // Series planificadas por grupo muscular en la semana actual
+  destroyChart('setsMuscle');
+  const setsByMuscle = {};
+  state.days.forEach(day => {
+    day.exercises.forEach(exr => {
+      const m = exr.muscle || 'Otro';
+      const n = (exr.setPattern || [0]).length;
+      setsByMuscle[m] = (setsByMuscle[m] || 0) + n;
+    });
+  });
+  const smLabels = Object.keys(setsByMuscle).sort((a,b) => setsByMuscle[b] - setsByMuscle[a]);
+  charts.setsMuscle = new Chart(document.getElementById('chartSetsMuscle'), {
+    type:'bar',
+    data:{ labels: smLabels, datasets:[{ label:'Series por semana', data: smLabels.map(m => setsByMuscle[m]),
+      backgroundColor: smLabels.map(m => MUSCLE_COLORS[m] || '#6B6F76') }] },
     options: CHART_BASE
   });
 
