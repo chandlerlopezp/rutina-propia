@@ -473,39 +473,39 @@ function defaultState(){
     history: [],
     days: [
       { id:1, title:'Día 1', pattern:'Piernas A', icon:'🦵', color:'red', exercises:[
-        ex('d1e1','Sentadilla','1x5 + 2x4 · mismo peso las 3','weight',4,6,5,160,6,['Sentadilla frontal','Prensa 45°','Hack squat'],'Cuádriceps',[0,-1,-1]),
-        ex('d1e2','Sentadilla búlgara','3 x 8-12','weight',8,12,2.5,30,10,['Zancada caminando','Step-up con peso'],'Cuádriceps',[0,0,0]),
-        ex('d1e3','Goblet squat','1x12 + 1x10','weight',10,12,2.5,40,12,[],'Cuádriceps',[0,-2]),
-        ex('d1e4','Extensión de cuádriceps','2 x 12','unregistered',10,12,2.5,null,null,[],'Cuádriceps',[0,0]),
-        ex('d1e5','Peso muerto rumano','1x12 + 1x10','weight',10,13,5,100,13,['Good morning barra baja','Peso muerto rumano a 1 pierna'],'Isquios / glúteo',[0,-2]),
-        ex('d1e6','Buenos días','1x14 + 1x12','weight',12,14,2.5,60,14,['Hiperextensión 45°','Peso muerto rumano a 1 pierna','Curl nórdico asistido'],'Isquios / glúteo',[0,-2]),
+        ex('d1e1','Sentadilla','mismo peso en las 3 series','weight',4,6,5,160,6,['Sentadilla frontal','Prensa 45°','Hack squat'],'Cuádriceps',[0,-1,-1]),
+        ex('d1e2','Sentadilla búlgara','','weight',8,12,2.5,30,10,['Zancada caminando','Step-up con peso'],'Cuádriceps',[0,0,0]),
+        ex('d1e3','Goblet squat','','weight',10,12,2.5,40,12,[],'Cuádriceps',[0,-2]),
+        ex('d1e4','Extensión de cuádriceps','','unregistered',10,12,2.5,null,null,[],'Cuádriceps',[0,0]),
+        ex('d1e5','Peso muerto rumano','','weight',10,13,5,100,13,['Good morning barra baja','Peso muerto rumano a 1 pierna'],'Isquios / glúteo',[0,-2]),
+        ex('d1e6','Buenos días','','weight',12,14,2.5,60,14,['Hiperextensión 45°','Peso muerto rumano a 1 pierna','Curl nórdico asistido'],'Isquios / glúteo',[0,-2]),
       ]},
       { id:2, title:'Día 2', pattern:'Empuje', icon:'💪', color:'blue', exercises:[
-        ex('d2e1','Press banca','3 x 5','weight',5,6,2.5,107.5,5,['Press banca mancuernas','Press banca inclinado'],'Pecho',[0,0,0]),
-        ex('d2e2','Remo landmine','2x12 + 1x10','weight',10,14,2.5,55,14,[],'Espalda',[0,0,-2]),
-        ex('d2e9','Press landmine','3 x 8-12','unregistered',8,12,2.5,null,null,['Press landmine arrodillado','Apertura de polea de abajo hacia arriba','Press inclinado con mancuernas'],'Pecho',[0,0,0]),
-        ex('d2e4','Press cerrado (close grip)','2 x 12','weight',12,14,2.5,80,14,['Fondos lastrados','Press francés barra Z'],'Brazos',[0,0]),
-        ex('d2e5','Aperturas con mancuernas','1x14 + 1x12','weight',12,14,1.25,22.5,12,[],'Pecho',[0,-2]),
-        ex('d2e6','Elevaciones laterales en polea','3 x 12-15','weight',12,15,1,5,15,['Elevación con mancuerna','Elevación en máquina'],'Hombro',[0,0,0]),
-        ex('d2e7','Face pull','3 x 15','unregistered',12,15,2.5,null,null,['Pájaros con mancuernas','Reverse pec deck'],'Hombro posterior',[0,0,0]),
-        ex('d2e8','Curl con barra recta','1x12 + 1x10','weight',10,14,2.5,45,14,[],'Brazos',[0,-2]),
+        ex('d2e1','Press banca','','weight',5,6,2.5,107.5,5,['Press banca mancuernas','Press banca inclinado'],'Pecho',[0,0,0]),
+        ex('d2e2','Remo landmine','','weight',10,14,2.5,55,14,[],'Espalda',[0,0,-2]),
+        ex('d2e9','Press landmine','','unregistered',8,12,2.5,null,null,['Press landmine arrodillado','Apertura de polea de abajo hacia arriba','Press inclinado con mancuernas'],'Pecho',[0,0,0]),
+        ex('d2e4','Press cerrado (close grip)','','weight',12,14,2.5,80,14,['Fondos lastrados','Press francés barra Z'],'Brazos',[0,0]),
+        ex('d2e5','Aperturas con mancuernas','','weight',12,14,1.25,22.5,12,[],'Pecho',[0,-2]),
+        ex('d2e6','Elevaciones laterales en polea','','weight',12,15,1,5,15,['Elevación con mancuerna','Elevación en máquina'],'Hombro',[0,0,0]),
+        ex('d2e7','Face pull','','unregistered',12,15,2.5,null,null,['Pájaros con mancuernas','Reverse pec deck'],'Hombro posterior',[0,0,0]),
+        ex('d2e8','Curl con barra recta','','weight',10,14,2.5,45,14,[],'Brazos',[0,-2]),
       ]},
       { id:3, title:'Día 3', pattern:'Piernas B', icon:'🦵', color:'red', exercises:[
-        ex('d3e1','Peso muerto','1x5 + 2x4 · mismo peso las 3','weight',4,6,5,170,6,['Peso muerto sumo','Peso muerto déficit','Peso muerto a la trampa'],'Isquios / glúteo',[0,-1,-1]),
-        ex('d3e2','Hip thrust','2x6 pesado + 2x12 backoff (~70%)','weight',6,8,5,190,8,['Hip thrust a 1 pierna','Puente de glúteo pausado'],'Isquios / glúteo',[0,0,4,4],[1,1,0.68,0.68]),
-        ex('d3e3','Curl femoral','2 x 12','unregistered',10,12,2.5,null,null,[],'Isquios / glúteo',[0,0]),
-        ex('d3e4','Estocada hacia atrás','2 x 10','weight',10,12,2.5,80,12,['Estocada búlgara foco isquio','Peso muerto rumano a 1 pierna'],'Isquios / glúteo',[0,0]),
-        ex('d3e5','Elevación de gemelo a 1 pierna','2x12 + 1x15','weight',10,12,2,14,10,[],'Pantorrilla',[0,0,3]),
-        ex('d3e6','Plancha frontal','3 x tiempo','time',null,60,5,30,null,[],'Core',[0,0,0]),
+        ex('d3e1','Peso muerto','mismo peso en las 3 series','weight',4,6,5,170,6,['Peso muerto sumo','Peso muerto déficit','Peso muerto a la trampa'],'Isquios / glúteo',[0,-1,-1]),
+        ex('d3e2','Hip thrust','las 2 últimas con ~70% del peso','weight',6,8,5,190,8,['Hip thrust a 1 pierna','Puente de glúteo pausado'],'Isquios / glúteo',[0,0,4,4],[1,1,0.68,0.68]),
+        ex('d3e3','Curl femoral','','unregistered',10,12,2.5,null,null,[],'Isquios / glúteo',[0,0]),
+        ex('d3e4','Estocada hacia atrás','','weight',10,12,2.5,80,12,['Estocada búlgara foco isquio','Peso muerto rumano a 1 pierna'],'Isquios / glúteo',[0,0]),
+        ex('d3e5','Elevación de gemelo a 1 pierna','','weight',10,12,2,14,10,[],'Pantorrilla',[0,0,3]),
+        ex('d3e6','Plancha frontal','por tiempo','time',null,60,5,30,null,[],'Core',[0,0,0]),
       ]},
       { id:4, title:'Día 4', pattern:'Tracción', icon:'🏋️', color:'green', exercises:[
-        ex('d4e1','Dorsalera a 1 mano','1x14 + 2x12','weight',12,16,2.5,55,16,['Jalón al pecho agarre neutro','Dominadas asistidas'],'Espalda',[0,-2,-2]),
-        ex('d4e2','Press militar','3 x 8','weight',8,9,2.5,57.5,8,['Press militar mancuernas','Press Arnold'],'Hombro',[0,0,0]),
-        ex('d4e3','Remo con barra','1x6+1x5+1x4 · mismo peso','weight',4,7,5,100,7,['Remo en T','Remo Pendlay'],'Espalda',[0,-1,-2]),
-        ex('d4e4','Remo en polea a 1 mano','1x10 + 1x8','weight',8,12,2.5,40,12,[],'Espalda',[0,-2]),
-        ex('d2e3','Pullover en polea','1x14 + 1x12','weight',12,14,2.5,45,14,[],'Espalda',[0,-2]),
-        ex('d4e5','Skull crusher','2 x 10','weight',10,12,2.5,35,12,[],'Brazos',[0,0]),
-        ex('d4e6','Extensión unilateral en polea','2 x 12','weight',12,14,2.5,25,12,[],'Brazos',[0,0]),
+        ex('d4e1','Dorsalera a 1 mano','','weight',12,16,2.5,55,16,['Jalón al pecho agarre neutro','Dominadas asistidas'],'Espalda',[0,-2,-2]),
+        ex('d4e2','Press militar','','weight',8,9,2.5,57.5,8,['Press militar mancuernas','Press Arnold'],'Hombro',[0,0,0]),
+        ex('d4e3','Remo con barra','mismo peso, reps descendentes','weight',4,7,5,100,7,['Remo en T','Remo Pendlay'],'Espalda',[0,-1,-2]),
+        ex('d4e4','Remo en polea a 1 mano','','weight',8,12,2.5,40,12,[],'Espalda',[0,-2]),
+        ex('d2e3','Pullover en polea','','weight',12,14,2.5,45,14,[],'Espalda',[0,-2]),
+        ex('d4e5','Skull crusher','','weight',10,12,2.5,35,12,[],'Brazos',[0,0]),
+        ex('d4e6','Extensión unilateral en polea','','weight',12,14,2.5,25,12,[],'Brazos',[0,0]),
       ]},
     ]
   };
@@ -516,7 +516,7 @@ function defaultState(){
 // volumen se calcula con las series reales y no multiplicando el top set.
 // wFactors: factor de peso por serie (para backoffs con menos carga).
 function ex(id,baseName,scheme,type,repFloor,repCeiling,weightStep,currentWeight,currentRepTarget,variants,muscle,setPattern,wFactors){
-  return {id, baseName, name:baseName, scheme, type, repFloor, repCeiling, weightStep, currentWeight, currentRepTarget, variants: variants||[], muscle, setPattern: setPattern||[0], wFactors: wFactors||null, progressMode:'peso'};
+  return {id, baseName, name:baseName, scheme, type, repFloor, repCeiling, weightStep, currentWeight, currentRepTarget, variants: variants||[], muscle, setPattern: setPattern||[0], wFactors: wFactors||null, progressMode:'peso', setReps:null, repStep:1};
 }
 
 // Devuelve volumen y reps totales reales de un ejercicio a partir del peso y
@@ -531,6 +531,36 @@ function exerciseTotals(weight, topReps, setPattern, wFactors){
     reps += r;
   });
   return { volume, reps };
+}
+
+// Volumen y reps a partir de las reps REALES de cada serie.
+function totalsFromSetReps(weight, setReps, wFactors){
+  const sr = (setReps && setReps.length) ? setReps : [0];
+  let volume = 0, reps = 0;
+  sr.forEach((r, i) => {
+    const wf = (wFactors && wFactors[i] !== undefined) ? wFactors[i] : 1;
+    volume += (weight || 0) * wf * r;
+    reps += r;
+  });
+  return { volume, reps };
+}
+
+// Cada serie lleva sus propias reps. Tomás progresaba una serie por vez
+// (2x10 -> 1x12+1x10 -> 2x12), lo que da saltos de volumen mucho más chicos
+// que subir todas juntas. setPattern queda solo como forma inicial.
+function deriveSetReps(exr){
+  if(Array.isArray(exr.setReps) && exr.setReps.length) return exr.setReps;
+  const pattern = exr.setPattern || [0];
+  const top = exr.currentRepTarget != null ? exr.currentRepTarget : (exr.repFloor || 0);
+  return pattern.map(o => Math.max(1, top + o));
+}
+
+function ensureSetReps(exr){
+  if(exr.type === 'time') return;
+  if(!Array.isArray(exr.setReps) || !exr.setReps.length){
+    exr.setReps = deriveSetReps(exr);
+  }
+  exr.currentRepTarget = Math.max.apply(null, exr.setReps);
 }
 
 const MUSCLE_COLORS = {
@@ -658,6 +688,8 @@ function reconcileState(saved){
         // Las series y el modo de progresión son editables: se conservan tal
         // como los dejó el usuario, no se pisan con los valores del código.
         setPattern: (Array.isArray(savedEx.setPattern) && savedEx.setPattern.length) ? savedEx.setPattern : freshEx.setPattern,
+        setReps: (Array.isArray(savedEx.setReps) && savedEx.setReps.length) ? savedEx.setReps : null,
+        repStep: savedEx.repStep || freshEx.repStep || 1,
         wFactors: savedEx.wFactors !== undefined ? savedEx.wFactors : freshEx.wFactors,
         progressMode: savedEx.progressMode || freshEx.progressMode || 'peso',
       };
@@ -681,6 +713,7 @@ function reconcileState(saved){
     merged.wodLibraryVersion = WOD_LIBRARY_VERSION;
   }
   if(!merged.progressFocus) merged.progressFocus = 'inferior';
+  merged.days.forEach(d => d.exercises.forEach(e => ensureSetReps(e)));
   if(!Array.isArray(merged.rmLog)) merged.rmLog = [];
   if(!merged.wodResults) merged.wodResults = {};
   if(!Array.isArray(merged.wodRecent)) merged.wodRecent = [];
@@ -705,7 +738,11 @@ function reconcileState(saved){
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return defaultState();
+    if(!raw){
+      const s = defaultState();
+      s.days.forEach(d => d.exercises.forEach(e => ensureSetReps(e)));
+      return s;
+    }
     const parsed = JSON.parse(raw);
     if(!parsed || !parsed.days) return defaultState();
     return reconcileState(parsed);
@@ -911,6 +948,12 @@ function addSetTo(exr){
   if(p.length >= MAX_SETS) return false;
   p.push(p[p.length-1]);
   exr.setPattern = p;
+  if(Array.isArray(exr.setReps) && exr.setReps.length){
+    const r = exr.setReps.slice();
+    // La serie nueva entra en el piso del rango: es la que más margen tiene.
+    r.push(exr.repFloor || r[r.length-1]);
+    exr.setReps = r;
+  }
   if(Array.isArray(exr.wFactors)){
     const w = exr.wFactors.slice();
     w.push(w[w.length-1]);
@@ -924,6 +967,12 @@ function removeSetFrom(exr){
   if(p.length <= 1) return false;
   p.pop();
   exr.setPattern = p;
+  if(Array.isArray(exr.setReps) && exr.setReps.length > 1){
+    const r = exr.setReps.slice();
+    r.pop();
+    exr.setReps = r;
+    exr.currentRepTarget = Math.max.apply(null, r);
+  }
   if(Array.isArray(exr.wFactors)){
     const w = exr.wFactors.slice();
     w.pop();
@@ -944,6 +993,14 @@ function changeSets(id, delta){
   renderDays();
 }
 
+function setRepStep(id, n){
+  const exr = findExercise(id);
+  if(!exr) return;
+  exr.repStep = n;
+  saveState(true);
+  renderDays();
+}
+
 function setProgressMode(id, mode){
   const exr = findExercise(id);
   if(!exr) return;
@@ -956,7 +1013,7 @@ function setProgressMode(id, mode){
 function setsForMuscle(muscle){
   let n = 0;
   state.days.forEach(d => d.exercises.forEach(e => {
-    if(e.muscle === muscle) n += (e.setPattern || [0]).length;
+    if(e.muscle === muscle) n += ((e.setReps && e.setReps.length) ? e.setReps : (e.setPattern || [0])).length;
   }));
   return n;
 }
@@ -1016,12 +1073,33 @@ function rampFor(exr, pesoTrabajo){
   </details>`;
 }
 
-function exSetsSummary(exr){
+// Arma la estructura de series a partir del patrón y del objetivo REAL de la
+// semana, agrupando series con las mismas reps. Antes esto era un texto fijo
+// copiado de las planillas viejas, que contradecía al objetivo cuando la
+// progresión movía las reps.
+function schemeText(exr){
   const pattern = exr.setPattern || [0];
-  if(exr.type === 'time') return `${pattern.length} series`;
-  if(exr.currentRepTarget == null) return `${pattern.length} series`;
-  const t = exerciseTotals(0, exr.currentRepTarget, pattern, null);
-  return `${pattern.length} series · ${t.reps} reps`;
+  if(exr.type === 'time') return `${pattern.length} x tiempo`;
+  const top = exr.currentRepTarget;
+  if(top == null){
+    // Sin objetivo todavía (ejercicio sin registrar): se muestra el rango.
+    return `${pattern.length} x ${exr.repFloor}-${exr.repCeiling}`;
+  }
+  const reps = (exr.setReps && exr.setReps.length) ? exr.setReps : pattern.map(o => Math.max(1, top + o));
+  const grupos = [];
+  reps.forEach(r => {
+    const ult = grupos[grupos.length-1];
+    if(ult && ult.reps === r) ult.n++;
+    else grupos.push({ reps:r, n:1 });
+  });
+  return grupos.map(g => `${g.n}x${g.reps}`).join(' + ');
+}
+
+function exSetsSummary(exr){
+  const sr = (exr.setReps && exr.setReps.length) ? exr.setReps : null;
+  const n = sr ? sr.length : (exr.setPattern || [0]).length;
+  if(exr.type === 'time' || !sr) return `${n} series`;
+  return `${n} series · ${sr.reduce((a,b)=>a+b,0)} reps`;
 }
 
 function renderDays(){
@@ -1076,6 +1154,14 @@ function renderDays(){
           <span class="cfg-note">${exr.muscle}: <b>${setsForMuscle(exr.muscle)}</b> series semanales — este es el número que importa</span>
         </div>
         <div class="cfg-row">
+          <span class="cfg-lbl">Avance por semana</span>
+          <span class="cfg-modes">
+            <button class="small ${(exr.repStep||1)===1?'wt-on':''}" onclick="setRepStep('${exr.id}',1)">+1 rep</button>
+            <button class="small ${(exr.repStep||1)===2?'wt-on':''}" onclick="setRepStep('${exr.id}',2)">+2 reps</button>
+          </span>
+          <span class="cfg-note">se suma a <b>una</b> serie por vez, no a todas</span>
+        </div>
+        <div class="cfg-row">
           <span class="cfg-lbl">Al llegar al techo de reps</span>
           <span class="cfg-modes">
             <button class="small ${modo==='peso'?'wt-on':''}" onclick="setProgressMode('${exr.id}','peso')">Subir peso</button>
@@ -1088,7 +1174,7 @@ function renderDays(){
       </details>`;
       return `<div class="exrow" id="row-${exr.id}">
         <div class="exhead">
-          <div><span class="exname">${exr.name}</span><span class="exmeta">${exr.scheme}</span></div>
+          <div><span class="exname">${exr.name}</span><span class="exmeta">${schemeText(exr)}${exr.scheme ? ' · ' + exr.scheme : ''}</span></div>
           <span style="text-align:right;">
             <span class="acc-meta" style="display:block;margin-bottom:6px;">${exSetsSummary(exr)}${modo==='series'?' · <span style="color:var(--blue);">series</span>':''}</span>
             ${variantBtn}
@@ -1316,26 +1402,42 @@ function computeNextStep(exr, loggedWeight, loggedReps){
   if(exr.type === 'time'){
     if(loggedWeight == null || isNaN(loggedWeight)) return { weight: exr.currentWeight, repTarget: null };
     if(loggedWeight >= exr.currentWeight){
-      // repCeiling hace de techo en segundos: más allá de cierto punto, sumar
-      // tiempo a una isometría deja de aportar y conviene otro estímulo.
       const cap = exr.repCeiling || Infinity;
       return { weight: Math.min(loggedWeight + exr.weightStep, cap), repTarget: null };
     }
     return { weight: exr.currentWeight, repTarget: null };
   }
   if(loggedWeight == null || isNaN(loggedWeight) || loggedReps == null || isNaN(loggedReps)){
-    return { weight: exr.currentWeight, repTarget: exr.currentRepTarget };
+    return { weight: exr.currentWeight, setReps: exr.setReps };
   }
-  if(loggedReps >= exr.repCeiling){
-    // Llegaste al techo de reps. Según el modo del ejercicio, el próximo
-    // escalón es más peso o una serie más (la palanca de hipertrofia).
-    const sets = (exr.setPattern || [0]).length;
-    if(exr.progressMode === 'series' && sets < MAX_SETS){
-      return { weight: loggedWeight, repTarget: exr.repFloor, addSet: true };
-    }
-    return { weight: round(loggedWeight + exr.weightStep, exr.weightStep), repTarget: exr.repFloor };
+
+  const sr = (exr.setReps && exr.setReps.length) ? exr.setReps.slice() : deriveSetReps(exr);
+  const topObjetivo = Math.max.apply(null, sr);
+
+  // No cumpliste el top set: se queda donde estás, con el peso que sí movés.
+  if(loggedReps < topObjetivo){
+    return { weight: loggedWeight, setReps: sr };
   }
-  return { weight: loggedWeight, repTarget: Math.min(loggedReps + 1, exr.repCeiling) };
+
+  // Cumpliste. Se sube UNA serie por vez: la primera que esté por debajo del
+  // techo. Recién cuando todas llegaron al techo se sube el peso y vuelven
+  // todas al piso del rango. Así el salto de volumen semanal es chico.
+  const paso = exr.repStep || 1;
+  const i = sr.findIndex(r => r < exr.repCeiling);
+  if(i !== -1){
+    sr[i] = Math.min(sr[i] + paso, exr.repCeiling);
+    return { weight: loggedWeight, setReps: sr };
+  }
+
+  // Todas al techo: o suma serie (modo hipertrofia) o sube peso.
+  const nSets = sr.length;
+  if(exr.progressMode === 'series' && nSets < MAX_SETS){
+    return { weight: loggedWeight, setReps: sr.map(() => exr.repFloor), addSet: true };
+  }
+  return {
+    weight: round(loggedWeight + exr.weightStep, exr.weightStep),
+    setReps: sr.map(() => exr.repFloor)
+  };
 }
 
 function closeWeek(){
@@ -1370,8 +1472,8 @@ function closeWeek(){
                           : (draft.reps !== undefined ? draft.reps
                           : (exr.currentRepTarget != null ? exr.currentRepTarget : null));
       entries[exr.id] = { name: exr.name, weight: loggedWeight, reps: loggedReps, type: exr.type,
-                          muscle: exr.muscle, setPattern: exr.setPattern, wFactors: exr.wFactors,
-                          skipped: false, dayId: day.id };
+                          muscle: exr.muscle, setPattern: exr.setPattern, setReps: exr.setReps,
+                          wFactors: exr.wFactors, skipped: false, dayId: day.id };
 
       // En semana de descarga NO se recalculan objetivos: la descarga es
       // intencionalmente más liviana, así que tomarla como "lo que lograste"
@@ -1389,8 +1491,13 @@ function closeWeek(){
       } else if(exerciseProgresses(exr, day.id)){
         const next = computeNextStep(exr, loggedWeight, loggedReps);
         exr.currentWeight = next.weight;
-        exr.currentRepTarget = next.repTarget;
-        if(next.addSet) addSetTo(exr);
+        if(exr.type === 'time'){
+          exr.currentRepTarget = next.repTarget;
+        } else if(next.setReps){
+          exr.setReps = next.setReps;
+          if(next.addSet) addSetTo(exr);
+          exr.currentRepTarget = Math.max.apply(null, exr.setReps);
+        }
       }
       // Fuera del foco de la semana: el objetivo se mantiene.
     });
@@ -1901,8 +2008,12 @@ function computeStats(){
       if(entry.type === 'time' || entry.skipped) return;
       if(entry.weight == null || entry.reps == null) return;
       // Volumen real expandiendo el patrón de series, no top set x nro de series.
-      const pattern = entry.setPattern || (entry.sets ? new Array(entry.sets).fill(0) : [0]);
-      const t = exerciseTotals(entry.weight, entry.reps, pattern, entry.wFactors);
+      // Si la semana guardó las reps de cada serie se usan esas; si es una
+      // semana vieja se reconstruyen desde el patrón.
+      const t = (entry.setReps && entry.setReps.length)
+        ? totalsFromSetReps(entry.weight, entry.setReps, entry.wFactors)
+        : exerciseTotals(entry.weight, entry.reps,
+            entry.setPattern || (entry.sets ? new Array(entry.sets).fill(0) : [0]), entry.wFactors);
       totalVolume += t.volume;
       totalReps += t.reps;
       const m = entry.muscle || 'Otro';
