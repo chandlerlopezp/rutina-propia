@@ -44,6 +44,30 @@
   .banner p{margin:0;font-size:13.5px;color:var(--ink);}
   .banner p b{color:var(--rust);}
   .banner-deload{flex-direction:column;align-items:stretch;}
+
+  .weektype{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:20px 0;}
+  .wt-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .wt-lbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-faint);}
+  .wt-current{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;padding:3px 11px;border-radius:20px;border:1px solid;}
+  .wt-prog{color:var(--sage);border-color:var(--sage);background:var(--sage-dim);}
+  .wt-adapt{color:var(--blue);border-color:var(--blue);background:var(--blue-dim);}
+  .wt-deload{color:var(--rust);border-color:var(--rust);background:var(--rust-dim);}
+  .wt-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .wt-opts button{text-align:left;padding:10px 12px;}
+  .wt-opts button span{display:block;font-family:'Inter',sans-serif;font-size:10.5px;text-transform:none;letter-spacing:0;color:var(--ink-faint);margin-top:3px;font-weight:400;line-height:1.35;}
+  .wt-opts button.wt-on{border-color:var(--mustard);background:var(--mustard-dim);color:var(--mustard);}
+  .wt-opts button.wt-on span{color:var(--mustard);opacity:.75;}
+  .wt-explica{font-size:12.5px;color:var(--ink-dim);margin:12px 0 0;}
+  .wt-aviso{font-size:12.5px;color:var(--rust);margin:8px 0 0;}
+  .wt-aviso b{color:var(--rust);}
+  .wt-foco{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;}
+  .wt-foco-opts{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+  .wt-foco p{font-size:12.5px;color:var(--ink-faint);margin:0;}
+  .wt-foco p b{color:var(--ink-dim);}
+  .day-status.foco{border-color:var(--mustard);color:var(--mustard);background:var(--mustard-dim);margin-left:6px;}
+  .badge-adapt{font-family:'Inter',sans-serif;font-size:10.5px;background:var(--blue-dim);color:var(--blue);padding:2px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.03em;}
+
+  @media (max-width:700px){ .wt-opts{grid-template-columns:repeat(2,1fr);} }
   .deload-opts{display:flex;gap:10px;flex-wrap:wrap;width:100%;}
   .deload-opts button{flex:1;min-width:190px;text-align:left;padding:10px 14px;}
   .deload-opts button span{display:block;font-family:'Inter',sans-serif;font-size:11px;text-transform:none;letter-spacing:0;color:var(--ink-faint);margin-top:3px;font-weight:400;}
@@ -83,6 +107,17 @@
   .exname{font-weight:700;font-size:13.5px;color:var(--ink);text-transform:uppercase;letter-spacing:0.01em;}
   .exmeta{display:block;color:var(--ink-faint);font-size:11.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;text-transform:none;}
   .pill{display:inline-block;padding:4px 11px;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;border:1px solid var(--mustard);color:var(--mustard);background:rgba(245,166,35,0.08);margin-right:6px;}
+  .ex-cfg{margin:0 0 10px;}
+  .ex-cfg summary{cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+  .ex-cfg summary:hover{color:var(--ink-dim);}
+  .cfg-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;}
+  .cfg-lbl{font-size:12px;color:var(--ink-dim);min-width:130px;}
+  .cfg-stepper{display:flex;align-items:center;gap:8px;}
+  .cfg-stepper b{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--ink);min-width:16px;text-align:center;}
+  .cfg-stepper button{padding:2px 10px;font-size:14px;line-height:1.2;}
+  .cfg-note{font-size:11.5px;color:var(--ink-faint);}
+  .cfg-modes{display:flex;gap:6px;}
+  .cfg-help{font-size:11.5px;color:var(--ink-faint);margin:0;}
   .ramp{margin:0 0 10px;}
   .ramp summary{cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mustard);text-transform:uppercase;letter-spacing:0.05em;}
   .ramp-steps{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 8px;align-items:center;}
@@ -185,6 +220,10 @@
   .chart-block-split{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
   .chart-block canvas{max-height:280px;}
   .chart-error{color:var(--rust);font-size:13px;padding:12px 0;}
+  .wk-deltas{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 8px;}
+  .wk-d{font-family:'IBM Plex Mono',monospace;font-size:11.5px;border-radius:20px;padding:3px 9px;border:1px solid var(--line-strong);color:var(--ink-dim);}
+  .wk-d.up{border-color:var(--sage);color:var(--sage);}
+  .wk-d.down{border-color:var(--rust);color:var(--rust);}
   .ref-box{margin-top:18px;border-top:1px solid var(--line);padding-top:14px;}
   .ref-lbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--mustard);margin-bottom:10px;}
   .ref-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
@@ -416,6 +455,8 @@ function defaultState(){
     lastDeloadWeek: null,
     deloadDue: false,
     pendingDeload: false,
+    pendingAdaptation: false,
+    progressFocus: 'inferior',
     deloadPct: null,
     uiPrefs: { openAcc: ['day1'], scrollY: 0, activeTab: 'rutina' },
     updatedAt: Date.now(),
@@ -442,7 +483,7 @@ function defaultState(){
       { id:2, title:'Día 2', pattern:'Empuje', icon:'💪', color:'blue', exercises:[
         ex('d2e1','Press banca','3 x 5','weight',5,6,2.5,107.5,5,['Press banca mancuernas','Press banca inclinado'],'Pecho',[0,0,0]),
         ex('d2e2','Remo landmine','2x12 + 1x10','weight',10,14,2.5,55,14,[],'Espalda',[0,0,-2]),
-        ex('d2e3','Pullover en polea','1x14 + 1x12','weight',12,14,2.5,45,14,[],'Espalda',[0,-2]),
+        ex('d2e9','Press landmine','3 x 8-12','unregistered',8,12,2.5,null,null,['Press landmine arrodillado','Apertura de polea de abajo hacia arriba','Press inclinado con mancuernas'],'Pecho',[0,0,0]),
         ex('d2e4','Press cerrado (close grip)','2 x 12','weight',12,14,2.5,80,14,['Fondos lastrados','Press francés barra Z'],'Brazos',[0,0]),
         ex('d2e5','Aperturas con mancuernas','1x14 + 1x12','weight',12,14,1.25,22.5,12,[],'Pecho',[0,-2]),
         ex('d2e6','Elevaciones laterales en polea','3 x 12-15','weight',12,15,1,5,15,['Elevación con mancuerna','Elevación en máquina'],'Hombro',[0,0,0]),
@@ -462,6 +503,7 @@ function defaultState(){
         ex('d4e2','Press militar','3 x 8','weight',8,9,2.5,57.5,8,['Press militar mancuernas','Press Arnold'],'Hombro',[0,0,0]),
         ex('d4e3','Remo con barra','1x6+1x5+1x4 · mismo peso','weight',4,7,5,100,7,['Remo en T','Remo Pendlay'],'Espalda',[0,-1,-2]),
         ex('d4e4','Remo en polea a 1 mano','1x10 + 1x8','weight',8,12,2.5,40,12,[],'Espalda',[0,-2]),
+        ex('d2e3','Pullover en polea','1x14 + 1x12','weight',12,14,2.5,45,14,[],'Espalda',[0,-2]),
         ex('d4e5','Skull crusher','2 x 10','weight',10,12,2.5,35,12,[],'Brazos',[0,0]),
         ex('d4e6','Extensión unilateral en polea','2 x 12','weight',12,14,2.5,25,12,[],'Brazos',[0,0]),
       ]},
@@ -474,7 +516,7 @@ function defaultState(){
 // volumen se calcula con las series reales y no multiplicando el top set.
 // wFactors: factor de peso por serie (para backoffs con menos carga).
 function ex(id,baseName,scheme,type,repFloor,repCeiling,weightStep,currentWeight,currentRepTarget,variants,muscle,setPattern,wFactors){
-  return {id, baseName, name:baseName, scheme, type, repFloor, repCeiling, weightStep, currentWeight, currentRepTarget, variants: variants||[], muscle, setPattern: setPattern||[0], wFactors: wFactors||null};
+  return {id, baseName, name:baseName, scheme, type, repFloor, repCeiling, weightStep, currentWeight, currentRepTarget, variants: variants||[], muscle, setPattern: setPattern||[0], wFactors: wFactors||null, progressMode:'peso'};
 }
 
 // Devuelve volumen y reps totales reales de un ejercicio a partir del peso y
@@ -589,7 +631,16 @@ function reconcileState(saved){
     const savedDay = (saved.days || []).find(d => d.id === freshDay.id);
     const mergedDay = { id: freshDay.id, title: freshDay.title, pattern: freshDay.pattern, icon: freshDay.icon, color: freshDay.color };
     mergedDay.exercises = freshDay.exercises.map(freshEx => {
-      const savedEx = savedDay && savedDay.exercises ? savedDay.exercises.find(e => e.id === freshEx.id) : null;
+      // Se busca por id en todos los días guardados: así, si un ejercicio
+      // cambia de día, conserva su peso, sus reps y su configuración.
+      let savedEx = savedDay && savedDay.exercises ? savedDay.exercises.find(e => e.id === freshEx.id) : null;
+      if(!savedEx){
+        (saved.days || []).some(d => {
+          const hit = (d.exercises || []).find(e => e.id === freshEx.id);
+          if(hit){ savedEx = hit; return true; }
+          return false;
+        });
+      }
       if(!savedEx) return freshEx;
       return {
         id: freshEx.id,
@@ -604,7 +655,11 @@ function reconcileState(saved){
         currentRepTarget: savedEx.currentRepTarget !== undefined ? savedEx.currentRepTarget : freshEx.currentRepTarget,
         variants: freshEx.variants,
         muscle: freshEx.muscle,
-        sets: freshEx.sets,
+        // Las series y el modo de progresión son editables: se conservan tal
+        // como los dejó el usuario, no se pisan con los valores del código.
+        setPattern: (Array.isArray(savedEx.setPattern) && savedEx.setPattern.length) ? savedEx.setPattern : freshEx.setPattern,
+        wFactors: savedEx.wFactors !== undefined ? savedEx.wFactors : freshEx.wFactors,
+        progressMode: savedEx.progressMode || freshEx.progressMode || 'peso',
       };
     });
     return mergedDay;
@@ -625,6 +680,7 @@ function reconcileState(saved){
     });
     merged.wodLibraryVersion = WOD_LIBRARY_VERSION;
   }
+  if(!merged.progressFocus) merged.progressFocus = 'inferior';
   if(!Array.isArray(merged.rmLog)) merged.rmLog = [];
   if(!merged.wodResults) merged.wodResults = {};
   if(!Array.isArray(merged.wodRecent)) merged.wodRecent = [];
@@ -837,6 +893,97 @@ function targetText(exr){
 }
 
 // Ejercicios pesados que merecen rampa de aproximación.
+// Qué ejercicios progresan esta semana. Progresar todo a la vez empuja el
+// volumen ~11% semanal, insostenible: en las planillas de Tomás el promedio
+// real era +0,5% y más de la mitad de las semanas bajaba. Por eso el foco rota.
+// Tope de series por ejercicio. En las planillas de Tomás casi todo estaba en
+// 2-3 series y muy pocas veces llegaba a 4: el volumen alto lo conseguía con
+// más ejercicios, no apilando series en uno. La serie 5 o 6 de un mismo
+// movimiento llega con fatiga local y rinde menos que esa misma serie en otro
+// ejercicio. Lo que importa es el total semanal por grupo muscular.
+const MAX_SETS = 4;
+
+// Suma una serie replicando el último escalón del patrón. El patrón guarda
+// offsets de reps respecto del top set, así que copiar el último mantiene la
+// forma de la progresión dentro del ejercicio.
+function addSetTo(exr){
+  const p = (exr.setPattern || [0]).slice();
+  if(p.length >= MAX_SETS) return false;
+  p.push(p[p.length-1]);
+  exr.setPattern = p;
+  if(Array.isArray(exr.wFactors)){
+    const w = exr.wFactors.slice();
+    w.push(w[w.length-1]);
+    exr.wFactors = w;
+  }
+  return true;
+}
+
+function removeSetFrom(exr){
+  const p = (exr.setPattern || [0]).slice();
+  if(p.length <= 1) return false;
+  p.pop();
+  exr.setPattern = p;
+  if(Array.isArray(exr.wFactors)){
+    const w = exr.wFactors.slice();
+    w.pop();
+    exr.wFactors = w;
+  }
+  return true;
+}
+
+function changeSets(id, delta){
+  const exr = findExercise(id);
+  if(!exr) return;
+  const ok = delta > 0 ? addSetTo(exr) : removeSetFrom(exr);
+  if(!ok){
+    alert(delta > 0 ? `Máximo ${MAX_SETS} series por ejercicio.` : 'Tiene que quedar al menos una serie.');
+    return;
+  }
+  saveState(true);
+  renderDays();
+}
+
+function setProgressMode(id, mode){
+  const exr = findExercise(id);
+  if(!exr) return;
+  exr.progressMode = mode;
+  saveState(true);
+  renderDays();
+}
+
+// Series semanales que acumula el grupo muscular de este ejercicio.
+function setsForMuscle(muscle){
+  let n = 0;
+  state.days.forEach(d => d.exercises.forEach(e => {
+    if(e.muscle === muscle) n += (e.setPattern || [0]).length;
+  }));
+  return n;
+}
+
+const FOCUS_DAYS = { inferior: [1,3], superior: [2,4] };
+
+function exerciseProgresses(exr, dayId){
+  const f = state.progressFocus || 'todo';
+  if(f === 'todo') return true;
+  if(f === 'basicos') return RAMP_LIFTS.includes(exr.id);
+  const dias = FOCUS_DAYS[f];
+  return dias ? dias.includes(dayId) : true;
+}
+
+const FOCUS_LABEL = {
+  todo: 'todo el programa',
+  inferior: 'tren inferior (días 1 y 3)',
+  superior: 'tren superior (días 2 y 4)',
+  basicos: 'solo los básicos'
+};
+
+function setFocus(f){
+  state.progressFocus = f;
+  saveState(true);
+  renderDeloadBanner();
+}
+
 const RAMP_LIFTS = ['d1e1','d2e1','d3e1','d3e2','d4e2','d4e3'];
 
 // Series de aproximación como % del peso de trabajo del día. Los escalones se
@@ -915,16 +1062,41 @@ function renderDays(){
           <label>Reps del top set<input type="number" id="r-${exr.id}" value="${rVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
         </div>`;
       }
+      const nSets = (exr.setPattern || [0]).length;
+      const modo = exr.progressMode || 'peso';
+      const cfg = isClosed ? '' : `<details class="ex-cfg">
+        <summary>Series y modo de progresión</summary>
+        <div class="cfg-row">
+          <span class="cfg-lbl">Series</span>
+          <span class="cfg-stepper">
+            <button class="small" onclick="changeSets('${exr.id}',-1)">−</button>
+            <b>${nSets}</b>
+            <button class="small" onclick="changeSets('${exr.id}',1)">+</button>
+          </span>
+          <span class="cfg-note">${exr.muscle}: <b>${setsForMuscle(exr.muscle)}</b> series semanales — este es el número que importa</span>
+        </div>
+        <div class="cfg-row">
+          <span class="cfg-lbl">Al llegar al techo de reps</span>
+          <span class="cfg-modes">
+            <button class="small ${modo==='peso'?'wt-on':''}" onclick="setProgressMode('${exr.id}','peso')">Subir peso</button>
+            <button class="small ${modo==='series'?'wt-on':''}" onclick="setProgressMode('${exr.id}','series')">Sumar serie</button>
+          </span>
+        </div>
+        <p class="cfg-help">${modo==='peso'
+          ? 'Cuando cumplas el techo de reps, sube el peso y vuelve al piso del rango. Es la palanca de fuerza.'
+          : `Cuando cumplas el techo de reps, suma una serie (hasta ${MAX_SETS}) y vuelve al piso del rango. Es la palanca de hipertrofia; al llegar al máximo de series pasa a subir peso.`}</p>
+      </details>`;
       return `<div class="exrow" id="row-${exr.id}">
         <div class="exhead">
           <div><span class="exname">${exr.name}</span><span class="exmeta">${exr.scheme}</span></div>
           <span style="text-align:right;">
-            <span class="acc-meta" style="display:block;margin-bottom:6px;">${exSetsSummary(exr)}</span>
+            <span class="acc-meta" style="display:block;margin-bottom:6px;">${exSetsSummary(exr)}${modo==='series'?' · <span style="color:var(--blue);">series</span>':''}</span>
             ${variantBtn}
           </span>
         </div>
         <div style="margin-bottom:10px;">${targetText(exr)}</div>
         ${rampFor(exr, wVal)}
+        ${cfg}
         ${inputs}
       </div>`;
     }).join('');
@@ -939,9 +1111,11 @@ function renderDays(){
            <button class="small primary" onclick="closeDay(${day.id})">Cerrar día ${day.id}</button>
          </div>`;
 
-    const statusBadge = isClosed
+    const progresa = !state.pendingDeload && !state.pendingAdaptation && exerciseProgresses(day.exercises[0], day.id);
+    const focoBadge = progresa ? '<span class="day-status foco">Progresa</span>' : '';
+    const statusBadge = (isClosed
       ? '<span class="day-status done">Cerrado</span>'
-      : '<span class="day-status">Pendiente</span>';
+      : '<span class="day-status">Pendiente</span>') + focoBadge;
 
     return `<div class="acc-card acc-${day.color}${isClosed ? ' is-closed' : ''}" data-acc="day${day.id}">
       <button class="acc-header" onclick="toggleAcc(this)">
@@ -1153,6 +1327,12 @@ function computeNextStep(exr, loggedWeight, loggedReps){
     return { weight: exr.currentWeight, repTarget: exr.currentRepTarget };
   }
   if(loggedReps >= exr.repCeiling){
+    // Llegaste al techo de reps. Según el modo del ejercicio, el próximo
+    // escalón es más peso o una serie más (la palanca de hipertrofia).
+    const sets = (exr.setPattern || [0]).length;
+    if(exr.progressMode === 'series' && sets < MAX_SETS){
+      return { weight: loggedWeight, repTarget: exr.repFloor, addSet: true };
+    }
     return { weight: round(loggedWeight + exr.weightStep, exr.weightStep), repTarget: exr.repFloor };
   }
   return { weight: loggedWeight, repTarget: Math.min(loggedReps + 1, exr.repCeiling) };
@@ -1196,19 +1376,23 @@ function closeWeek(){
       // En semana de descarga NO se recalculan objetivos: la descarga es
       // intencionalmente más liviana, así que tomarla como "lo que lograste"
       // haría que tus pesos de trabajo bajen un 15% de forma permanente.
-      if(state.pendingDeload){
-        // objetivos sin cambios
+      if(state.pendingDeload || state.pendingAdaptation){
+        // Objetivos sin cambios. En descarga porque la carga fue menor a
+        // propósito; en adaptación porque el punto es repetir el mismo
+        // estímulo y darle al cuerpo la ventana para consolidarlo.
       } else if(exr.type === 'unregistered'){
         if(loggedWeight != null){
           exr.type = 'weight';
           exr.currentWeight = loggedWeight;
           exr.currentRepTarget = loggedReps != null ? Math.min(loggedReps+1, exr.repCeiling) : exr.repFloor;
         }
-      } else {
+      } else if(exerciseProgresses(exr, day.id)){
         const next = computeNextStep(exr, loggedWeight, loggedReps);
         exr.currentWeight = next.weight;
         exr.currentRepTarget = next.repTarget;
+        if(next.addSet) addSetTo(exr);
       }
+      // Fuera del foco de la semana: el objetivo se mantiene.
     });
   });
 
@@ -1217,6 +1401,8 @@ function closeWeek(){
     date: new Date().toLocaleDateString('es-AR'),
     deload: state.pendingDeload,
     deloadPct: state.pendingDeload ? (state.deloadPct || 15) : null,
+    adaptation: state.pendingAdaptation,
+    focus: state.progressFocus,
     entries,
     daysDone: state.days.filter(d => state.dayClosed[d.id]).map(d => d.id),
     finishers: { day2: state.currentFinishers.day2, day4: state.currentFinishers.day4 },
@@ -1238,7 +1424,11 @@ function closeWeek(){
     state.lastDeloadWeek = state.weekNumber;
   }
   state.pendingDeload = false;
+  state.pendingAdaptation = false;
   state.deloadPct = null;
+  // Alternar el foco para la semana siguiente.
+  if(state.progressFocus === 'inferior') state.progressFocus = 'superior';
+  else if(state.progressFocus === 'superior') state.progressFocus = 'inferior';
   state.weekNumber += 1;
   state.currentFinishers = rollWeeklyWods(state);
 
@@ -1298,11 +1488,28 @@ function markDeload(pct){
   renderDeloadBanner();
 }
 
-function cancelDeload(){
-  if(!confirm('Cancelar la descarga y volver a los pesos normales de esta semana?')) return;
-  state.pendingDeload = false;
-  state.deloadPct = null;
-  state.draftLog = {};
+function weekTypeLabel(){
+  if(state.pendingDeload) return 'descarga';
+  if(state.pendingAdaptation) return 'adaptación';
+  return 'progresión';
+}
+
+function setWeekType(tipo, pct){
+  if(tipo === 'normal'){
+    if(state.pendingDeload && !confirm('Volver a semana de progresión y restaurar los pesos normales?')) return;
+    state.pendingDeload = false;
+    state.pendingAdaptation = false;
+    state.deloadPct = null;
+    if(Object.keys(state.draftLog).length) state.draftLog = {};
+  } else if(tipo === 'adaptacion'){
+    state.pendingAdaptation = true;
+    state.pendingDeload = false;
+    state.deloadPct = null;
+    state.draftLog = {};
+  } else if(tipo === 'descarga'){
+    markDeload(pct);
+    return;
+  }
   saveState(true);
   renderDays();
   renderDeloadBanner();
@@ -1310,21 +1517,46 @@ function cancelDeload(){
 
 function renderDeloadBanner(){
   const mount = document.getElementById('deloadBanner');
-  if(!state.deloadDue && !state.pendingDeload){ mount.innerHTML = ''; return; }
-  if(state.pendingDeload){
-    const pct = state.deloadPct || 15;
-    mount.innerHTML = `<div class="banner"><p>Semana marcada como <b>descarga ${pct === 30 ? 'profunda' : 'suave'}</b>. Los pesos de arriba ya bajaron un ${pct}%. Entrená con eso y cerrá la semana normal: tus objetivos quedan intactos.</p><button class="small" onclick="cancelDeload()">Cancelar descarga</button></div>`;
-    return;
-  }
   const weeksSince = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
-  mount.innerHTML = `<div class="banner banner-deload">
-    <p>Llevás <b>${weeksSince} semanas</b> sin descarga. Si venís cargado, elegí una antes de entrenar.</p>
-    <div class="deload-opts">
-      <button class="small" onclick="markDeload(15)">Suave −15%<span>descansa articulaciones, mantiene el patrón</span></button>
-      <button class="small" onclick="markDeload(30)">Profunda −30%<span>para cuando venís muy acumulado</span></button>
+  const tipo = weekTypeLabel();
+  const pct = state.deloadPct || 15;
+
+  const aviso = (state.deloadDue && tipo === 'progresión')
+    ? `<p class="wt-aviso">Llevás <b>${weeksSince} semanas</b> sin descarga. Si venís cargado, conviene bajar un cambio.</p>`
+    : '';
+
+  const f = state.progressFocus || 'todo';
+  const focoHtml = tipo !== 'progresión' ? '' : `<div class="wt-foco">
+    <span class="wt-lbl">Foco de esta semana</span>
+    <div class="wt-foco-opts">
+      ${['inferior','superior','basicos','todo'].map(k => `<button class="small ${f===k?'wt-on':''}" onclick="setFocus('${k}')">${{inferior:'Tren inferior',superior:'Tren superior',basicos:'Solo básicos',todo:'Todo'}[k]}</button>`).join('')}
     </div>
+    <p>Solo progresa <b>${FOCUS_LABEL[f]}</b>. El resto mantiene su objetivo. Se alterna solo al cerrar la semana.</p>
+  </div>`;
+
+  const explica = {
+    'progresión': 'Al cerrar la semana, los objetivos suben: una rep más, o más peso si llegaste al techo.',
+    'adaptación': 'Los objetivos quedan congelados: repetís lo mismo la semana que viene. Sirve para consolidar el estímulo y limpiar técnica sin sumar fatiga.',
+    'descarga': `Los pesos bajaron un ${pct}%. Los objetivos no se recalculan: la semana siguiente volvés a donde estabas.`
+  }[tipo];
+
+  mount.innerHTML = `<div class="weektype">
+    <div class="wt-head">
+      <span class="wt-lbl">Tipo de semana</span>
+      <span class="wt-current wt-${tipo === 'progresión' ? 'prog' : (tipo === 'adaptación' ? 'adapt' : 'deload')}">${tipo}</span>
+    </div>
+    <div class="wt-opts">
+      <button class="small ${tipo==='progresión'?'wt-on':''}" onclick="setWeekType('normal')">Progresión<span>empuja: +1 rep o más peso</span></button>
+      <button class="small ${tipo==='adaptación'?'wt-on':''}" onclick="setWeekType('adaptacion')">Adaptación<span>repite lo mismo, sin subir</span></button>
+      <button class="small ${tipo==='descarga'&&pct===15?'wt-on':''}" onclick="setWeekType('descarga',15)">Descarga −15%<span>descansa articulaciones</span></button>
+      <button class="small ${tipo==='descarga'&&pct===30?'wt-on':''}" onclick="setWeekType('descarga',30)">Descarga −30%<span>reset profundo</span></button>
+    </div>
+    <p class="wt-explica">${explica}</p>
+    ${focoHtml}
+    ${aviso}
   </div>`;
 }
+
 
 // Epley: estima el 1RM a partir de un peso levantado por N reps.
 // Con 1 rep devuelve el peso tal cual. Pierde precisión arriba de ~10 reps.
@@ -1601,7 +1833,7 @@ function renderHistory(){
       ? `<p class="histfin">Días entrenados: ${daysDone.length ? daysDone.map(n => 'Día '+n).join(', ') : 'ninguno'}${daysDone.length < 4 ? ' · faltaron ' + (4 - daysDone.length) : ''}</p>`
       : '';
     return `<details class="histrow">
-      <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?`<span class="badge-deload">Descarga −${week.deloadPct || 15}%</span>`:''}</summary>
+      <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?`<span class="badge-deload">Descarga −${week.deloadPct || 15}%</span>`:(week.adaptation?'<span class="badge-adapt">Adaptación</span>':'')}</summary>
       ${daysLabel}
       <table class="histtable">${rows}</table>
     </details>`;
@@ -1709,11 +1941,28 @@ function renderStatCards(stats){
   const weeksSinceDeload = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
   const deloadCount = perWeek.filter(w => w.deload).length;
 
+  // Variación de volumen entre semanas consecutivas
+  const deltas = [];
+  for(let i = 1; i < perWeek.length; i++){
+    const prev = perWeek[i-1].totalVolume;
+    if(prev > 0) deltas.push({ week: perWeek[i].weekNumber, pct: (perWeek[i].totalVolume - prev) / prev * 100 });
+  }
+  const ultimas = deltas.slice(-10);
+  const deltasHtml = ultimas.length
+    ? ultimas.map(d => `<span class="wk-d ${d.pct >= 0 ? 'up' : 'down'}">S${d.week} ${d.pct >= 0 ? '+' : ''}${d.pct.toFixed(1)}%</span>`).join('')
+    : '<span class="sdelta">Necesitás al menos dos semanas cerradas.</span>';
+  const prom = deltas.length ? deltas.reduce((a,b) => a + b.pct, 0) / deltas.length : 0;
+
   mount.innerHTML = `
     <div class="stat-card"><div class="slabel">Semanas registradas</div><div class="sval">${perWeek.length}</div></div>
     <div class="stat-card"><div class="slabel">Volumen última semana</div><div class="sval">${fmtKg(last.totalVolume)} kg</div></div>
     <div class="stat-card"><div class="slabel">Vs. tu promedio</div><div class="sval ${delta>=0?'up':'down'}">${delta>=0?'+':''}${delta.toFixed(0)}%</div></div>
     <div class="stat-card"><div class="slabel">Racha sin descarga</div><div class="sval">${weeksSinceDeload} sem.</div><div class="sdelta">${deloadCount} descargas en total</div></div>
+    <div class="stat-card" style="grid-column:1/-1;">
+      <div class="slabel">Cambio de volumen semana a semana</div>
+      <div class="wk-deltas">${deltasHtml}</div>
+      <div class="sdelta">Promedio ${prom > 0 ? '+' : ''}${prom.toFixed(1)}% · referencia de tus planillas viejas: +0,5% con más de la mitad de las semanas en negativo. La progresión buena casi no se nota semana a semana.</div>
+    </div>
   `;
 }
 
