@@ -116,6 +116,15 @@
   .set-cell .set-tgt{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mustard);text-transform:none;letter-spacing:0;margin-top:2px;}
   .set-cell input{text-align:center;padding:8px 4px;}
   @media (max-width:520px){ .log-sets{grid-template-columns:1fr;} }
+  .rir-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .rir-lbl{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
+  .rir-opts{display:flex;gap:4px;}
+  .rir-btn{min-width:34px;padding:4px 8px;font-family:'IBM Plex Mono',monospace;}
+  .rir-note{font-size:11px;color:var(--ink-faint);flex-basis:100%;}
+  .stall{background:var(--rust-dim);border:1px solid var(--rust);border-radius:8px;padding:12px 14px;margin:0 0 10px;}
+  .stall-head{font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--rust);margin-bottom:4px;}
+  .stall p{font-size:12.5px;color:var(--ink-dim);margin:0 0 10px;}
+  .stall-opts{display:flex;gap:6px;flex-wrap:wrap;}
   .ex-cfg{margin:0 0 10px;}
   .ex-cfg summary{cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
   .ex-cfg summary:hover{color:var(--ink-dim);}
@@ -526,7 +535,7 @@ function defaultState(){
 // volumen se calcula con las series reales y no multiplicando el top set.
 // wFactors: factor de peso por serie (para backoffs con menos carga).
 function ex(id,baseName,scheme,type,repFloor,repCeiling,weightStep,currentWeight,currentRepTarget,variants,muscle,setPattern,wFactors){
-  return {id, baseName, name:baseName, scheme, type, repFloor, repCeiling, weightStep, currentWeight, currentRepTarget, variants: variants||[], muscle, setPattern: setPattern||[0], wFactors: wFactors||null, progressMode:'peso', setReps:null, repStep:1};
+  return {id, baseName, name:baseName, scheme, type, repFloor, repCeiling, weightStep, currentWeight, currentRepTarget, variants: variants||[], muscle, setPattern: setPattern||[0], wFactors: wFactors||null, progressMode:'peso', setReps:null, repStep:1, stallWeeks:0};
 }
 
 // Devuelve volumen y reps totales reales de un ejercicio a partir del peso y
@@ -711,6 +720,7 @@ function reconcileState(saved){
         setPattern: (Array.isArray(savedEx.setPattern) && savedEx.setPattern.length) ? savedEx.setPattern : freshEx.setPattern,
         setReps: (Array.isArray(savedEx.setReps) && savedEx.setReps.length) ? savedEx.setReps : null,
         repStep: savedEx.repStep || freshEx.repStep || 1,
+        stallWeeks: savedEx.stallWeeks || 0,
         wFactors: savedEx.wFactors !== undefined ? savedEx.wFactors : freshEx.wFactors,
         progressMode: savedEx.progressMode || freshEx.progressMode || 'peso',
       };
@@ -959,6 +969,13 @@ function syncNow(){
     return;
   }
   syncFromCloud();
+}
+
+// Redondea a un peso que se pueda armar con discos: múltiplos de 2,5 kg
+// (o del paso del ejercicio si es más chico, como las elevaciones de a 1 kg).
+function cargable(kg, step){
+  const s = Math.min(step || 2.5, 2.5);
+  return Math.round(kg / s) * s;
 }
 
 function round(n, step){
@@ -1237,9 +1254,11 @@ function renderDays(){
           </span>
         </div>
         <div style="margin-bottom:10px;">${targetText(exr)}</div>
+        ${stallHtml(exr, isClosed)}
         ${rampFor(exr, wVal)}
         ${cfg}
         ${inputs}
+        ${rirHtml(exr, draft, isClosed)}
       </div>`;
     }).join('');
 
@@ -1336,6 +1355,76 @@ function renderDays(){
   });
 }
 
+// Selector de RIR: cuántas reps te quedaban en el tanque en la serie más dura.
+function rirHtml(exr, draft, isClosed){
+  if(exr.type === 'time') return '';
+  const sel = (draft && draft.rir != null) ? draft.rir : null;
+  const btns = [0,1,2,3,4].map(v =>
+    `<button class="small rir-btn ${sel === v ? 'wt-on' : ''}" ${isClosed ? 'disabled' : ''} onclick="setRir('${exr.id}',${v})">${v === 4 ? '4+' : v}</button>`
+  ).join('');
+  const lectura = sel == null ? 'opcional — reps que te quedaban en la serie más dura'
+    : sel === 0 ? 'al fallo: si cumpliste, se consolida en vez de avanzar'
+    : sel === 1 ? 'muy exigente, progresión normal'
+    : sel <= 3 ? 'con margen: si fallaste reps, no cuenta como estancamiento'
+    : 'sobrado: el peso podría estar liviano';
+  return `<div class="rir-row">
+    <span class="rir-lbl">Esfuerzo (RIR)</span>
+    <span class="rir-opts">${btns}</span>
+    <span class="rir-note">${lectura}</span>
+  </div>`;
+}
+
+function setRir(exId, v){
+  // Captura lo que haya en los campos, así el RIR queda asociado a esos valores.
+  saveDraft(exId);
+  const d = state.draftLog[exId];
+  d.rir = (d.rir === v) ? null : v;   // tocar el mismo valor lo desmarca
+  saveState();
+  renderDays();
+}
+
+function stallHtml(exr, isClosed){
+  const s = exr.stallWeeks || 0;
+  if(s < STALL_LIMIT || isClosed) return '';
+  const variante = exr.variants && exr.variants.length
+    ? `<button class="small" onclick="resolveStall('${exr.id}','variante')">Cambiar variante</button>` : '';
+  return `<div class="stall">
+    <div class="stall-head">Estancado · ${s} semanas sin cumplir el objetivo</div>
+    <p>Repetir lo mismo rara vez destraba un estancamiento. Opciones, de la más usada a la menos:</p>
+    <div class="stall-opts">
+      <button class="small primary" onclick="resolveStall('${exr.id}','reconstruir')">Bajar 10% y reconstruir</button>
+      ${variante}
+      <button class="small" onclick="resolveStall('${exr.id}','seguir')">Seguir intentando</button>
+    </div>
+  </div>`;
+}
+
+function resolveStall(id, accion){
+  const exr = findExercise(id);
+  if(!exr) return;
+  if(accion === 'reconstruir'){
+    const nuevo = exr.type === 'time'
+      ? Math.max(10, Math.round(exr.currentWeight * 0.9))
+      : cargable(exr.currentWeight * 0.9, exr.weightStep);
+    if(!confirm(`Bajar ${exr.name} de ${exr.currentWeight} a ${nuevo}${exr.type==='time'?' seg':'kg'} y volver al piso del rango?\n\nLa idea es reconstruir con buena técnica: en pocas semanas suele superarse la marca anterior.`)) return;
+    exr.currentWeight = nuevo;
+    if(exr.type !== 'time'){
+      const nS = (exr.setReps && exr.setReps.length) ? exr.setReps.length : (exr.setPattern || [0]).length;
+      exr.setReps = new Array(nS).fill(exr.repFloor);
+      exr.currentRepTarget = exr.repFloor;
+    }
+    exr.stallWeeks = 0;
+    delete state.draftLog[id];
+  } else if(accion === 'variante'){
+    rotateVariant(id);   // ya resetea el contador
+    return;
+  } else {
+    exr.stallWeeks = 0;
+  }
+  saveState(true);
+  renderDays();
+}
+
 function toggleFinisherDone(key){
   const st = state.finisherStatus[key] || {done:false, note:''};
   st.done = !st.done;
@@ -1406,7 +1495,9 @@ function saveDraft(exId){
   const validas = setReps.filter(x => x != null);
   // reps = la mejor serie (el top set), se usa para el 1RM estimado.
   const reps = validas.length ? Math.max.apply(null, validas) : null;
-  state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null };
+  const prev = state.draftLog[exId] || {};
+  state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null,
+                           rir: prev.rir != null ? prev.rir : null };
   clearTimeout(draftSaveTimeouts[exId]);
   draftSaveTimeouts[exId] = setTimeout(() => { saveState(); }, 600);
 }
@@ -1460,10 +1551,38 @@ function rotateVariant(id){
   exr.name = newName;
   exr.currentWeight = isNaN(parsed) ? null : parsed;
   exr.currentRepTarget = exr.type === 'time' ? null : exr.repFloor;
+  // Ejercicio nuevo: todas las series arrancan en el piso y sin historial
+  // de estancamiento (antes quedaban las series del ejercicio anterior).
+  if(exr.type !== 'time'){
+    const nS = (exr.setReps && exr.setReps.length) ? exr.setReps.length : (exr.setPattern || [0]).length;
+    exr.setReps = new Array(nS).fill(exr.repFloor);
+  }
+  exr.stallWeeks = 0;
   exr.type = (exr.type === 'unregistered') ? 'unregistered' : exr.type;
   delete state.draftLog[id];
   saveState(true);
   renderDays();
+}
+
+// Semanas seguidas sin cumplir el objetivo a partir de las cuales se avisa.
+const STALL_LIMIT = 3;
+
+// ¿Cumpliste el objetivo de la semana? true / false, o null si no hay datos.
+// Se evalúa ANTES de recalcular, contra el objetivo que tenías.
+function evaluarCumplimiento(exr, w, r, hechas){
+  if(exr.type === 'time'){
+    if(w == null || isNaN(w) || exr.currentWeight == null) return null;
+    return w >= exr.currentWeight;
+  }
+  if(w == null || isNaN(w)) return null;
+  // Si tuviste que bajar el peso respecto del objetivo, no se cumplió.
+  if(exr.currentWeight != null && w < exr.currentWeight) return false;
+  const sr = (exr.setReps && exr.setReps.length) ? exr.setReps : deriveSetReps(exr);
+  if(Array.isArray(hechas) && hechas.length === sr.length){
+    return sr.every((obj, i) => (hechas[i] != null ? hechas[i] : 0) >= obj);
+  }
+  if(r == null) return null;
+  return r >= Math.max.apply(null, sr);
 }
 
 function computeNextStep(exr, loggedWeight, loggedReps, hechasPorSerie){
@@ -1592,6 +1711,21 @@ function closeWeek(){
       // En semana de descarga NO se recalculan objetivos: la descarga es
       // intencionalmente más liviana, así que tomarla como "lo que lograste"
       // haría que tus pesos de trabajo bajen un 15% de forma permanente.
+      // --- Detector de estancamiento ---
+      // Cuenta semanas seguidas sin cumplir el objetivo. Si fallaste pero
+      // marcaste que te sobraban 2+ reps (RIR alto), no fue falta de
+      // capacidad — mala semana, dolor, poco tiempo — y no cuenta.
+      const rir = (draft.rir != null) ? draft.rir : null;
+      const cumple = evaluarCumplimiento(exr, loggedWeight, loggedReps, hechasPorSerie);
+      entries[exr.id].rir = rir;
+      entries[exr.id].cumplio = cumple;
+      if(!state.pendingDeload && exr.type !== 'unregistered'){
+        if(cumple === true) exr.stallWeeks = 0;
+        else if(cumple === false && (rir == null || rir <= 1)) exr.stallWeeks = (exr.stallWeeks || 0) + 1;
+      }
+      // Cumpliste pero al fallo (RIR 0): se consolida en vez de avanzar.
+      const alFallo = (cumple === true && rir === 0);
+
       if(state.pendingDeload || state.pendingAdaptation){
         // Objetivos sin cambios. En descarga porque la carga fue menor a
         // propósito; en adaptación porque el punto es repetir el mismo
@@ -1614,7 +1748,7 @@ function closeWeek(){
             exr.currentRepTarget = Math.max.apply(null, exr.setReps);
           }
         }
-      } else if(exerciseProgresses(exr, day.id)){
+      } else if(exerciseProgresses(exr, day.id) && !alFallo){
         const next = computeNextStep(exr, loggedWeight, loggedReps, hechasPorSerie);
         exr.currentWeight = next.weight;
         if(exr.type === 'time'){
@@ -1707,7 +1841,7 @@ function markDeload(pct){
       const prev = state.draftLog[exr.id];
       if(prev && !prev.auto) return;
       if(exr.type === 'weight' && exr.currentWeight != null){
-        const w = round(exr.currentWeight * factor, exr.weightStep);
+        const w = cargable(exr.currentWeight * factor, exr.weightStep);
         const nS = (exr.setReps && exr.setReps.length) ? exr.setReps.length : (exr.setPattern || [0]).length;
         state.draftLog[exr.id] = { weight: w, reps: exr.repFloor,
                                    setReps: new Array(nS).fill(exr.repFloor), auto: true };
@@ -2071,7 +2205,10 @@ function renderHistory(){
   state.days.forEach(d => d.exercises.forEach(e => nameById[e.id] = e.baseName));
   mount.innerHTML = state.history.slice().reverse().map(week => {
     const rows = Object.entries(week.entries).filter(([,v]) => v.weight != null && !v.skipped).map(([id, v]) => {
-      const label = v.type === 'time' ? `${v.weight} seg` : `${v.weight} kg${v.reps!=null?(' × '+v.reps):''}`;
+      const series = (v.setReps && v.setReps.length) ? ' · ' + v.setReps.join('/') : (v.reps != null ? ' × ' + v.reps : '');
+      const rirTxt = v.rir != null ? ` <span style="color:var(--ink-faint);">RIR ${v.rir === 4 ? '4+' : v.rir}</span>` : '';
+      const falla = v.cumplio === false ? ' <span style="color:var(--rust);">✗</span>' : '';
+      const label = v.type === 'time' ? `${v.weight} seg${falla}` : `${v.weight} kg${series}${rirTxt}${falla}`;
       return `<tr><td>${esc(v.name)}</td><td>${label}</td></tr>`;
     }).join('');
     const daysDone = week.daysDone;
@@ -2191,6 +2328,19 @@ function renderStatCards(stats){
   const weeksSinceDeload = state.weekNumber - (state.lastDeloadWeek || state.startWeek);
   const deloadCount = perWeek.filter(w => w.deload).length;
 
+  // Ejercicios estancados o en riesgo (1-2 semanas sin cumplir)
+  const todos = [];
+  state.days.forEach(d => d.exercises.forEach(e => {
+    if(e.type !== 'unregistered') todos.push({ nombre: e.name, dia: d.id, s: e.stallWeeks || 0 });
+  }));
+  const estancados = todos.filter(x => x.s >= STALL_LIMIT);
+  const enRiesgo = todos.filter(x => x.s > 0 && x.s < STALL_LIMIT);
+  const chip = (x, cls) => `<span class="wk-d ${cls}">${esc(x.nombre)} · día ${x.dia} · ${x.s} sem.</span>`;
+  const estadoHtml = (estancados.length || enRiesgo.length)
+    ? `<div class="wk-deltas">${estancados.map(x => chip(x,'down')).join('')}${enRiesgo.map(x => chip(x,'')).join('')}</div>
+       <div class="sdelta">En rojo: ${STALL_LIMIT}+ semanas sin cumplir, con opciones en la rutina. En gris: 1-2 semanas, todavía normal.</div>`
+    : `<div class="sval up" style="font-size:16px;">Todo progresando</div><div class="sdelta">Ningún ejercicio lleva semanas sin cumplir su objetivo.</div>`;
+
   // Variación de volumen entre semanas consecutivas
   const deltas = [];
   for(let i = 1; i < perWeek.length; i++){
@@ -2208,6 +2358,10 @@ function renderStatCards(stats){
     <div class="stat-card"><div class="slabel">Volumen última semana</div><div class="sval">${fmtKg(last.totalVolume)} kg</div></div>
     <div class="stat-card"><div class="slabel">Vs. tu promedio</div><div class="sval ${delta>=0?'up':'down'}">${delta>=0?'+':''}${delta.toFixed(0)}%</div></div>
     <div class="stat-card"><div class="slabel">Racha sin descarga</div><div class="sval">${weeksSinceDeload} sem.</div><div class="sdelta">${deloadCount} descargas en total</div></div>
+    <div class="stat-card" style="grid-column:1/-1;">
+      <div class="slabel">Estado de progresión</div>
+      ${estadoHtml}
+    </div>
     <div class="stat-card" style="grid-column:1/-1;">
       <div class="slabel">Cambio de volumen semana a semana</div>
       <div class="wk-deltas">${deltasHtml}</div>
