@@ -55,8 +55,11 @@
   .wt-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
   .wt-opts button{text-align:left;padding:10px 12px;}
   .wt-opts button span{display:block;font-family:'Inter',sans-serif;font-size:10.5px;text-transform:none;letter-spacing:0;color:var(--ink-faint);margin-top:3px;font-weight:400;line-height:1.35;}
-  .wt-opts button.wt-on{border-color:var(--mustard);background:var(--mustard-dim);color:var(--mustard);}
-  .wt-opts button.wt-on span{color:var(--mustard);opacity:.75;}
+  button.wt-on, button.wt-on:hover{border-color:var(--mustard);background:var(--mustard-dim);color:var(--mustard);font-weight:600;}
+  button.wt-on span{color:var(--mustard);opacity:.75;}
+  /* En días cerrados los botones se deshabilitan: la selección tiene que seguir viéndose */
+  button:disabled{cursor:default;opacity:.45;}
+  button.wt-on:disabled{opacity:.85;}
   .wt-explica{font-size:12.5px;color:var(--ink-dim);margin:12px 0 0;}
   .wt-aviso{font-size:12.5px;color:var(--rust);margin:8px 0 0;}
   .wt-aviso b{color:var(--rust);}
@@ -120,6 +123,8 @@
   .rir-lbl{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
   .rir-opts{display:flex;gap:4px;}
   .rir-btn{min-width:34px;padding:4px 8px;font-family:'IBM Plex Mono',monospace;}
+  .rir-btn.wt-on{background:var(--mustard);color:var(--bg);border-color:var(--mustard);}
+  .rir-btn.wt-on:hover{background:var(--mustard);color:var(--bg);}
   .rir-note{font-size:11px;color:var(--ink-faint);flex-basis:100%;}
   .stall{background:var(--rust-dim);border:1px solid var(--rust);border-radius:8px;padding:12px 14px;margin:0 0 10px;}
   .stall-head{font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--rust);margin-bottom:4px;}
@@ -1368,7 +1373,7 @@ function rirHtml(exr, draft, isClosed){
     : sel <= 3 ? 'con margen: si fallaste reps, no cuenta como estancamiento'
     : 'sobrado: el peso podría estar liviano';
   return `<div class="rir-row">
-    <span class="rir-lbl">Esfuerzo (RIR)</span>
+    <span class="rir-lbl">RIR serie más dura</span>
     <span class="rir-opts">${btns}</span>
     <span class="rir-note">${lectura}</span>
   </div>`;
