@@ -107,6 +107,15 @@
   .exname{font-weight:700;font-size:13.5px;color:var(--ink);text-transform:uppercase;letter-spacing:0.01em;}
   .exmeta{display:block;color:var(--ink-faint);font-size:11.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;text-transform:none;}
   .pill{display:inline-block;padding:4px 11px;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;border:1px solid var(--mustard);color:var(--mustard);background:rgba(245,166,35,0.08);margin-right:6px;}
+  .undo-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--blue-dim);border:1px solid var(--blue);border-radius:10px;padding:12px 16px;margin-top:24px;}
+  .undo-bar span{font-size:13px;color:var(--ink);}
+  .log-sets{display:grid;grid-template-columns:minmax(90px,130px) 1fr;gap:10px;align-items:end;}
+  .log-sets label{display:block;font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
+  .log-sets label input{margin-top:5px;}
+  .set-cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;}
+  .set-cell .set-tgt{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mustard);text-transform:none;letter-spacing:0;margin-top:2px;}
+  .set-cell input{text-align:center;padding:8px 4px;}
+  @media (max-width:520px){ .log-sets{grid-template-columns:1fr;} }
   .ex-cfg{margin:0 0 10px;}
   .ex-cfg summary{cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
   .ex-cfg summary:hover{color:var(--ink-dim);}
@@ -291,6 +300,7 @@
   <div id="panel-rutina" class="panel active">
     <div id="daysMount"></div>
 
+    <div id="undoMount"></div>
     <div class="closeweek">
       <p>Cuando termines de entrenar y anotar los pesos/reps logrados de los 4 días, cerrá la semana. La app calcula sola los objetivos de la semana que viene para cada ejercicio.</p>
       <button class="primary" onclick="closeWeek()">Cerrar semana y generar la próxima</button>
@@ -557,6 +567,8 @@ function deriveSetReps(exr){
 
 function ensureSetReps(exr){
   if(exr.type === 'time') return;
+  // Sin registrar: todavía no hay objetivo, se muestra el rango.
+  if(exr.type === 'unregistered'){ exr.setReps = null; exr.currentRepTarget = null; return; }
   if(!Array.isArray(exr.setReps) || !exr.setReps.length){
     exr.setReps = deriveSetReps(exr);
   }
@@ -614,6 +626,15 @@ const DEFAULT_WOD_LIBRARY = [
 // Se incrementa cuando se suman WODs nuevos a la biblioteca por defecto, para
 // poder agregarlos a bibliotecas ya guardadas sin pisar las ediciones propias.
 const WOD_LIBRARY_VERSION = 2;
+
+// Todo texto que venga del usuario o de un archivo importado pasa por acá
+// antes de insertarse como HTML. Sin esto, un WOD importado con etiquetas
+// podía inyectar código en la página.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
@@ -752,7 +773,14 @@ function loadState(){
   }
 }
 
+// Cada guardado incrementa este contador. Una subida solo marca "limpio" si
+// no hubo guardados nuevos mientras viajaba: si no, un cambio hecho durante
+// la subida quedaba marcado como sincronizado sin haberse subido.
+let saveSeq = 0;
+let avisoTamanoMostrado = false;
+
 function saveState(pushImmediately){
+  saveSeq++;
   state.updatedAt = Date.now();
   state.dirty = true; // hay cambios locales que todavía no se confirmaron en la nube
   try{
@@ -822,11 +850,30 @@ function pushToCloud(){
     // cada dispositivo. Si viajaran por la nube, abrir la app en el celular
     // pisaría cómo dejaste las tarjetas en la notebook, y viceversa.
     delete payload.uiPrefs;
+    // Firestore no acepta documentos de más de 1 MB. Con ~6 KB por semana eso
+    // llega en unos 3 años; se avisa con tiempo para no fallar en silencio.
+    const bytes = JSON.stringify(payload).length;
+    if(bytes > 1000000){
+      console.error('Documento demasiado grande para Firestore:', bytes);
+      updateSyncBadge('error');
+      alert('Tu historial llegó al límite de tamaño de la nube (1 MB) y no se puede sincronizar más. Descargá un backup: hay que archivar semanas viejas.');
+      return;
+    }
+    if(bytes > 800000 && !avisoTamanoMostrado){
+      avisoTamanoMostrado = true;
+      alert(`Tu historial ocupa ${Math.round(bytes/1024)} KB de 1024 KB disponibles en la nube. Todavía funciona, pero conviene planificar el archivado de semanas viejas.`);
+    }
+    const seqAlSubir = saveSeq;
     cloudDocRef().set(payload)
       .then(() => {
-        state.dirty = false;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        updateSyncBadge('ok');
+        if(saveSeq === seqAlSubir){
+          state.dirty = false;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          updateSyncBadge('ok');
+        } else {
+          // Hubo cambios mientras subía: queda pendiente y se vuelve a subir.
+          scheduleCloudPush();
+        }
       })
       .catch(err => {
         console.error('Error subiendo datos a Firebase', err);
@@ -1129,15 +1176,24 @@ function renderDays(){
         : '';
       const draft = state.draftLog[exr.id] || {};
       const wVal = draft.weight !== undefined ? draft.weight : exr.currentWeight;
-      const rVal = draft.reps !== undefined ? draft.reps : exr.currentRepTarget;
       const dis = isClosed ? ' disabled' : '';
       let inputs;
       if(exr.type === 'time'){
         inputs = `<div class="log-box"><label>Segundos logrados<input type="number" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label></div>`;
       } else {
-        inputs = `<div class="log-box" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <label>Peso top set (kg)<input type="number" step="0.5" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
-          <label>Reps del top set<input type="number" id="r-${exr.id}" value="${rVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
+        // Una casilla por serie. La progresión avanza de a una serie, así que
+        // necesita saber qué hiciste en cada una, no solo en la primera.
+        const nS = (exr.setReps && exr.setReps.length) ? exr.setReps.length : (exr.setPattern || [0]).length;
+        const objetivo = exr.setReps || [];
+        const hechas = (draft.setReps && draft.setReps.length) ? draft.setReps : null;
+        const celdas = Array.from({length:nS}, (_, i) => {
+          const v = hechas ? hechas[i] : objetivo[i];
+          const meta = objetivo[i] != null ? `<span class="set-tgt">obj ${objetivo[i]}</span>` : '';
+          return `<label class="set-cell">Serie ${i+1}${meta}<input type="number" inputmode="numeric" id="r-${exr.id}-${i}" value="${v ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>`;
+        }).join('');
+        inputs = `<div class="log-box log-sets">
+          <label class="log-peso">Peso (kg)<input type="number" step="0.5" inputmode="decimal" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
+          <div class="set-cells">${celdas}</div>
         </div>`;
       }
       const nSets = (exr.setPattern || [0]).length;
@@ -1197,7 +1253,7 @@ function renderDays(){
            <button class="small primary" onclick="closeDay(${day.id})">Cerrar día ${day.id}</button>
          </div>`;
 
-    const progresa = !state.pendingDeload && !state.pendingAdaptation && exerciseProgresses(day.exercises[0], day.id);
+    const progresa = !state.pendingDeload && !state.pendingAdaptation && day.exercises.some(e => exerciseProgresses(e, day.id));
     const focoBadge = progresa ? '<span class="day-status foco">Progresa</span>' : '';
     const statusBadge = (isClosed
       ? '<span class="day-status done">Cerrado</span>'
@@ -1227,7 +1283,7 @@ function renderDays(){
     const cur = state.currentFinishers[key] || {id:'', text:''};
     const prev = wodResultsFor(cur.id).slice(0, 3);
     const prevHtml = prev.length
-      ? `<div class="wod-prev"><span class="wod-prev-lbl">Marcas anteriores</span>${prev.map(r => `<span class="wod-mark">S${r.week}: <b>${r.value}</b></span>`).join('')}</div>`
+      ? `<div class="wod-prev"><span class="wod-prev-lbl">Marcas anteriores</span>${prev.map(r => `<span class="wod-mark">S${r.week}: <b>${esc(r.value)}</b></span>`).join('')}</div>`
       : `<div class="wod-prev"><span class="wod-prev-lbl">Primera vez que te toca este</span></div>`;
     return `<div class="wod-item">
       <div class="wod-item-head">
@@ -1240,11 +1296,11 @@ function renderDays(){
           ${st.done ? '<span class="day-status done">Hecho</span>' : '<span class="day-status">Pendiente</span>'}
         </span>
       </div>
-      <p>${cur.text}</p>
+      <p>${esc(cur.text)}</p>
       ${prevHtml}
       <div class="wod-inputs">
-        <label>Tu marca (tiempo o reps)<input type="text" placeholder="ej: 12:45 · 5 rondas + 8" value="${(st.result||'').replace(/"/g,'&quot;')}" oninput="setFinisherField('${key}','result',this.value)"></label>
-        <label>Nota (opcional)<input type="text" placeholder="cuándo lo hiciste, cómo salió" value="${(st.note||'').replace(/"/g,'&quot;')}" oninput="setFinisherField('${key}','note',this.value)"></label>
+        <label>Tu marca (tiempo o reps)<input type="text" placeholder="ej: 12:45 · 5 rondas + 8" value="${esc(st.result||'')}" oninput="setFinisherField('${key}','result',this.value)"></label>
+        <label>Nota (opcional)<input type="text" placeholder="cuándo lo hiciste, cómo salió" value="${esc(st.note||'')}" oninput="setFinisherField('${key}','note',this.value)"></label>
       </div>
     </div>`;
   }).join('');
@@ -1333,12 +1389,24 @@ function reopenDay(dayId){
   renderDays();
 }
 
+// Un timer por ejercicio, para no guardar en cada tecla sino 600ms después
+// de la última. (Esta declaración se había perdido en un refactor: saveDraft
+// tiraba ReferenceError en cada tecla y el valor solo se guardaba de rebote.)
+const draftSaveTimeouts = {};
+
 function saveDraft(exId){
   const wInput = document.getElementById('w-'+exId);
-  const rInput = document.getElementById('r-'+exId);
   const weight = wInput && wInput.value !== '' ? parseFloat(wInput.value) : null;
-  const reps = rInput && rInput.value !== '' ? parseInt(rInput.value) : null;
-  state.draftLog[exId] = { weight, reps };
+  const setReps = [];
+  for(let i = 0; ; i++){
+    const el = document.getElementById('r-'+exId+'-'+i);
+    if(!el) break;
+    setReps.push(el.value !== '' ? parseInt(el.value) : null);
+  }
+  const validas = setReps.filter(x => x != null);
+  // reps = la mejor serie (el top set), se usa para el 1RM estimado.
+  const reps = validas.length ? Math.max.apply(null, validas) : null;
+  state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null };
   clearTimeout(draftSaveTimeouts[exId]);
   draftSaveTimeouts[exId] = setTimeout(() => { saveState(); }, 600);
 }
@@ -1398,7 +1466,7 @@ function rotateVariant(id){
   renderDays();
 }
 
-function computeNextStep(exr, loggedWeight, loggedReps){
+function computeNextStep(exr, loggedWeight, loggedReps, hechasPorSerie){
   if(exr.type === 'time'){
     if(loggedWeight == null || isNaN(loggedWeight)) return { weight: exr.currentWeight, repTarget: null };
     if(loggedWeight >= exr.currentWeight){
@@ -1414,8 +1482,13 @@ function computeNextStep(exr, loggedWeight, loggedReps){
   const sr = (exr.setReps && exr.setReps.length) ? exr.setReps.slice() : deriveSetReps(exr);
   const topObjetivo = Math.max.apply(null, sr);
 
-  // No cumpliste el top set: se queda donde estás, con el peso que sí movés.
-  if(loggedReps < topObjetivo){
+  // ¿Cumpliste? Si cargaste cada serie, se exige que TODAS lleguen a su
+  // objetivo: 2x12 con 12 y 10 no está cumplido. Sin detalle por serie
+  // (semanas viejas), se evalúa solo el top set.
+  const cumplio = (Array.isArray(hechasPorSerie) && hechasPorSerie.length === sr.length)
+    ? sr.every((obj, i) => (hechasPorSerie[i] != null ? hechasPorSerie[i] : 0) >= obj)
+    : loggedReps >= topObjetivo;
+  if(!cumplio){
     return { weight: loggedWeight, setReps: sr };
   }
 
@@ -1440,6 +1513,30 @@ function computeNextStep(exr, loggedWeight, loggedReps){
   };
 }
 
+const UNDO_KEY = 'rutina-santiago-undo';
+
+function getUndo(){
+  try{
+    const raw = localStorage.getItem(UNDO_KEY);
+    if(!raw) return null;
+    const u = JSON.parse(raw);
+    // Solo sirve si seguís en la semana inmediatamente posterior al cierre.
+    return (u && u.foto && u.semana === state.weekNumber - 1) ? u : null;
+  }catch(e){ return null; }
+}
+
+function undoCloseWeek(){
+  const u = getUndo();
+  if(!u){ alert('No hay un cierre de semana para deshacer.'); return; }
+  if(!confirm(`Volver a la semana ${u.semana} tal como estaba antes de cerrarla?\n\nSe descartan los objetivos recalculados y el registro de esa semana en el historial.`)) return;
+  const ui = state.uiPrefs;
+  state = reconcileState(u.foto);
+  if(ui) state.uiPrefs = ui;
+  localStorage.removeItem(UNDO_KEY);
+  saveState(true);
+  render();
+}
+
 function closeWeek(){
   // Solo se procesan los días que cerraste. Un día sin cerrar se registra
   // como no entrenado: no progresa ni suma volumen, y sus objetivos quedan
@@ -1454,6 +1551,14 @@ function closeWeek(){
     );
     if(!ok) return;
   }
+
+  // Foto del estado antes de cerrar, para poder deshacer. Se guarda solo en
+  // este dispositivo (no en la nube) para no duplicar el tamaño del documento.
+  try{
+    const foto = JSON.parse(JSON.stringify(state));
+    delete foto.uiPrefs;
+    localStorage.setItem(UNDO_KEY, JSON.stringify({ foto, semana: state.weekNumber, cuando: Date.now() }));
+  }catch(e){ console.error('No se pudo guardar la foto para deshacer', e); }
 
   const entries = {};
   state.days.forEach(day => {
@@ -1471,8 +1576,17 @@ function closeWeek(){
       const loggedReps = exr.type === 'time' ? null
                           : (draft.reps !== undefined ? draft.reps
                           : (exr.currentRepTarget != null ? exr.currentRepTarget : null));
+      // Lo que hiciste en cada serie. Si no tocaste el ejercicio se asume el
+      // objetivo exacto (cerrar el día ya te avisó de eso).
+      const hechasPorSerie = exr.type === 'time' ? null
+                          : ((draft.setReps && draft.setReps.some(x => x != null)) ? draft.setReps
+                          : (exr.setReps ? exr.setReps.slice() : null));
       entries[exr.id] = { name: exr.name, weight: loggedWeight, reps: loggedReps, type: exr.type,
-                          muscle: exr.muscle, setPattern: exr.setPattern, setReps: exr.setReps,
+                          muscle: exr.muscle, setPattern: exr.setPattern,
+                          // Se guardan las reps HECHAS, no el objetivo: así el
+                          // volumen de Estadísticas refleja lo que pasó.
+                          setReps: hechasPorSerie ? hechasPorSerie.map(x => x == null ? 0 : x) : exr.setReps,
+                          targetReps: exr.setReps ? exr.setReps.slice() : null,
                           wFactors: exr.wFactors, skipped: false, dayId: day.id };
 
       // En semana de descarga NO se recalculan objetivos: la descarga es
@@ -1484,12 +1598,24 @@ function closeWeek(){
         // estímulo y darle al cuerpo la ventana para consolidarlo.
       } else if(exr.type === 'unregistered'){
         if(loggedWeight != null){
+          // Primera vez: las series arrancan en lo que hiciste y desde ahí
+          // progresa como cualquier otro ejercicio, de a una serie.
+          const base = loggedReps != null ? loggedReps : exr.repFloor;
           exr.type = 'weight';
           exr.currentWeight = loggedWeight;
-          exr.currentRepTarget = loggedReps != null ? Math.min(loggedReps+1, exr.repCeiling) : exr.repFloor;
+          exr.setReps = (hechasPorSerie && hechasPorSerie.some(x => x != null))
+            ? hechasPorSerie.map(x => Math.max(1, Math.min(x != null ? x : exr.repFloor, exr.repCeiling)))
+            : (exr.setPattern || [0]).map(o => Math.max(1, Math.min(base + o, exr.repCeiling)));
+          exr.currentRepTarget = Math.max.apply(null, exr.setReps);
+          if(exerciseProgresses(exr, day.id)){
+            const next = computeNextStep(exr, loggedWeight, exr.currentRepTarget, exr.setReps.slice());
+            exr.currentWeight = next.weight;
+            if(next.setReps) exr.setReps = next.setReps;
+            exr.currentRepTarget = Math.max.apply(null, exr.setReps);
+          }
         }
       } else if(exerciseProgresses(exr, day.id)){
-        const next = computeNextStep(exr, loggedWeight, loggedReps);
+        const next = computeNextStep(exr, loggedWeight, loggedReps, hechasPorSerie);
         exr.currentWeight = next.weight;
         if(exr.type === 'time'){
           exr.currentRepTarget = next.repTarget;
@@ -1572,21 +1698,25 @@ function markDeload(pct){
   state.pendingDeload = true;
   state.deloadPct = pct;
   const factor = (100 - pct) / 100;
+  clearAutoDrafts();
   state.days.forEach(day => {
+    // Un día ya cerrado es un día entrenado: sus valores no se tocan.
+    if(state.dayClosed[day.id]) return;
     day.exercises.forEach(exr => {
+      // Si ya cargaste algo a mano en este ejercicio, se respeta.
+      const prev = state.draftLog[exr.id];
+      if(prev && !prev.auto) return;
       if(exr.type === 'weight' && exr.currentWeight != null){
-        const wInput = document.getElementById('w-'+exr.id);
-        const rInput = document.getElementById('r-'+exr.id);
         const w = round(exr.currentWeight * factor, exr.weightStep);
-        if(wInput) wInput.value = w;
-        if(rInput) rInput.value = exr.repFloor;
-        state.draftLog[exr.id] = { weight: w, reps: exr.repFloor };
+        const nS = (exr.setReps && exr.setReps.length) ? exr.setReps.length : (exr.setPattern || [0]).length;
+        state.draftLog[exr.id] = { weight: w, reps: exr.repFloor,
+                                   setReps: new Array(nS).fill(exr.repFloor), auto: true };
       }
       if(exr.type === 'time' && exr.currentWeight != null){
         const wInput = document.getElementById('w-'+exr.id);
         const w = Math.max(10, Math.round(exr.currentWeight * factor));
         if(wInput) wInput.value = w;
-        state.draftLog[exr.id] = { weight: w };
+        state.draftLog[exr.id] = { weight: w, auto: true };
       }
     });
   });
@@ -1601,18 +1731,27 @@ function weekTypeLabel(){
   return 'progresión';
 }
 
+// Borra únicamente los valores precargados automáticamente por la descarga
+// (marcados con auto:true). Nunca toca lo que cargaste a mano.
+function clearAutoDrafts(){
+  Object.keys(state.draftLog).forEach(k => {
+    if(state.draftLog[k] && state.draftLog[k].auto) delete state.draftLog[k];
+  });
+}
+
 function setWeekType(tipo, pct){
   if(tipo === 'normal'){
     if(state.pendingDeload && !confirm('Volver a semana de progresión y restaurar los pesos normales?')) return;
     state.pendingDeload = false;
     state.pendingAdaptation = false;
     state.deloadPct = null;
-    if(Object.keys(state.draftLog).length) state.draftLog = {};
+    clearAutoDrafts();
   } else if(tipo === 'adaptacion'){
     state.pendingAdaptation = true;
     state.pendingDeload = false;
     state.deloadPct = null;
-    state.draftLog = {};
+    // Solo se sacan los valores que puso la descarga; lo que cargaste vos queda.
+    clearAutoDrafts();
   } else if(tipo === 'descarga'){
     markDeload(pct);
     return;
@@ -1689,13 +1828,13 @@ function renderRM(){
       const best = rows[0];
       return `<div class="wod-lib-item">
         <div class="wod-lib-head">
-          <p><b>${lift}</b> — mejor marca: <span class="pill">${best.weight}kg × ${best.reps}</span>
+          <p><b>${esc(lift)}</b> — mejor marca: <span class="pill">${best.weight}kg × ${best.reps}</span>
              ${best.reps > 1 ? `<span class="wod-origen">1RM est. ${best.e}kg</span>` : '<span class="wod-origen">RM real</span>'}</p>
         </div>
         <details><summary>Todas las marcas (${rows.length})</summary>
           <table class="histtable" style="margin-top:8px;">
             ${rows.map(r => `<tr>
-              <td>${r.weight}kg × ${r.reps}${r.note ? ' <span style="color:var(--ink-faint);font-style:italic;">· '+r.note+'</span>' : ''}</td>
+              <td>${r.weight}kg × ${r.reps}${r.note ? ' <span style="color:var(--ink-faint);font-style:italic;">· '+esc(r.note)+'</span>' : ''}</td>
               <td>S${r.week} · est. ${r.e}kg <button class="small danger" style="margin-left:8px;" onclick="deleteRM('${r.id}')">×</button></td>
             </tr>`).join('')}
           </table>
@@ -1773,13 +1912,13 @@ function renderWodLibrary(){
   mount.innerHTML = lib.map(w => {
     const res = wodResultsFor(w.id);
     const marks = res.length
-      ? `<table class="histtable" style="margin:10px 0 0;">${res.map(r => `<tr><td>Semana ${r.week}</td><td>${r.value}${r.note ? ' <span style="color:var(--ink-faint);font-style:italic;">· '+r.note+'</span>' : ''}</td></tr>`).join('')}</table>`
+      ? `<table class="histtable" style="margin:10px 0 0;">${res.map(r => `<tr><td>Semana ${r.week}</td><td>${esc(r.value)}${r.note ? ' <span style="color:var(--ink-faint);font-style:italic;">· '+esc(r.note)+'</span>' : ''}</td></tr>`).join('')}</table>`
       : '<p class="chart-note" style="margin:8px 0 0;">Sin marcas registradas todavía.</p>';
     const badge = inUse.includes(w.id) ? '<span class="day-status done">Esta semana</span>' : '';
     const origen = w.origen ? `<span class="wod-origen">${w.origen}</span>` : '';
     return `<div class="wod-lib-item">
       <div class="wod-lib-head">
-        <p>${w.text}</p>
+        <p>${esc(w.text)}</p>
         <span class="wod-lib-actions">
           ${badge}${origen}
           <button class="small" onclick="editWod('${w.id}')">Editar</button>
@@ -1910,12 +2049,12 @@ function renderWodHistory(){
   mount.innerHTML = rows.map(r => {
     const badge = !r.hasStatus ? ''
       : (r.done ? '<span class="day-status done">Hecho</span>' : '<span class="day-status">No hecho</span>');
-    const marca = r.result ? `<span class="wod-mark" style="margin-top:6px;display:inline-block;">Marca: <b>${r.result}</b></span>` : '';
-    const note = r.note ? `<span class="wod-note">${r.note}</span>` : '';
+    const marca = r.result ? `<span class="wod-mark" style="margin-top:6px;display:inline-block;">Marca: <b>${esc(r.result)}</b></span>` : '';
+    const note = r.note ? `<span class="wod-note">${esc(r.note)}</span>` : '';
     return `
     <div class="wod-row wod-${r.color}${r.hasStatus && !r.done ? ' wod-skipped' : ''}">
       <div class="wod-tag">S${r.weekNumber}<br>${r.label}</div>
-      <p>${r.text}${note}<br>${marca}</p>
+      <p>${esc(r.text)}${note}<br>${marca}</p>
       ${badge}
     </div>
   `;
@@ -1933,7 +2072,7 @@ function renderHistory(){
   mount.innerHTML = state.history.slice().reverse().map(week => {
     const rows = Object.entries(week.entries).filter(([,v]) => v.weight != null && !v.skipped).map(([id, v]) => {
       const label = v.type === 'time' ? `${v.weight} seg` : `${v.weight} kg${v.reps!=null?(' × '+v.reps):''}`;
-      return `<tr><td>${v.name}</td><td>${label}</td></tr>`;
+      return `<tr><td>${esc(v.name)}</td><td>${label}</td></tr>`;
     }).join('');
     const daysDone = week.daysDone;
     const daysLabel = daysDone
@@ -2175,7 +2314,17 @@ function renderStats(){
   });
 }
 
+function renderUndo(){
+  const m = document.getElementById('undoMount');
+  if(!m) return;
+  const u = getUndo();
+  m.innerHTML = u
+    ? `<div class="undo-bar"><span>Cerraste la semana ${u.semana}. ¿Te equivocaste en algo?</span><button class="small" onclick="undoCloseWeek()">Deshacer cierre</button></div>`
+    : '';
+}
+
 function render(){
+  renderUndo();
   document.getElementById('weeknum').textContent = state.weekNumber;
   renderDeloadBanner();
   renderDays();
