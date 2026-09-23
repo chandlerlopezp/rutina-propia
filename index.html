@@ -119,6 +119,9 @@
   .set-cell .set-tgt{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mustard);text-transform:none;letter-spacing:0;margin-top:2px;}
   .set-cell input{text-align:center;padding:8px 4px;}
   @media (max-width:520px){ .log-sets{grid-template-columns:1fr;} }
+  .ex-skipped{opacity:.55;}
+  .ex-skipped .exname{text-decoration:line-through;}
+  .skip-btn{margin-left:6px;}
   .rir-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
   .rir-lbl{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
   .rir-opts{display:flex;gap:4px;}
@@ -1250,12 +1253,25 @@ function renderDays(){
           ? 'Cuando cumplas el techo de reps, sube el peso y vuelve al piso del rango. Es la palanca de fuerza.'
           : `Cuando cumplas el techo de reps, suma una serie (hasta ${MAX_SETS}) y vuelve al piso del rango. Es la palanca de hipertrofia; al llegar al máximo de series pasa a subir peso.`}</p>
       </details>`;
+      if(draft.skipped){
+        return `<div class="exrow ex-skipped" id="row-${exr.id}">
+          <div class="exhead">
+            <div><span class="exname">${exr.name}</span><span class="exmeta">No hecho esta semana · el objetivo queda para la próxima</span></div>
+            <span style="text-align:right;">
+              <span class="day-status">No hecho</span>
+              ${isClosed ? '' : `<button class="small" style="margin-left:6px;" onclick="toggleSkip('${exr.id}')">Lo hice igual</button>`}
+            </span>
+          </div>
+        </div>`;
+      }
+      const skipBtn = isClosed ? '' : `<button class="small skip-btn" onclick="toggleSkip('${exr.id}')">No lo hice</button>`;
       return `<div class="exrow" id="row-${exr.id}">
         <div class="exhead">
           <div><span class="exname">${exr.name}</span><span class="exmeta">${schemeText(exr)}${exr.scheme ? ' · ' + exr.scheme : ''}</span></div>
           <span style="text-align:right;">
             <span class="acc-meta" style="display:block;margin-bottom:6px;">${exSetsSummary(exr)}${modo==='series'?' · <span style="color:var(--blue);">series</span>':''}</span>
             ${variantBtn}
+            ${skipBtn}
           </span>
         </div>
         <div style="margin-bottom:10px;">${targetText(exr)}</div>
@@ -1358,6 +1374,24 @@ function renderDays(){
     const card = mount.querySelector(`[data-acc="${key}"]`);
     if(card) card.classList.add('open');
   });
+}
+
+// Marca un ejercicio puntual como no hecho dentro de un día entrenado.
+function toggleSkip(exId){
+  const prev = state.draftLog[exId] || {};
+  if(prev.skipped){
+    const d = Object.assign({}, prev);
+    delete d.skipped;
+    // Si no tenía nada cargado, vuelve a quedar como "sin tocar".
+    if(d.weight == null && !d.setReps && d.rir == null) delete state.draftLog[exId];
+    else state.draftLog[exId] = d;
+  } else {
+    const d = Object.assign({}, prev, { skipped: true });
+    delete d.auto;   // que la descarga no lo borre al recalcular
+    state.draftLog[exId] = d;
+  }
+  saveState();
+  renderDays();
 }
 
 // Selector de RIR: cuántas reps te quedaban en el tanque en la serie más dura.
@@ -1503,6 +1537,7 @@ function saveDraft(exId){
   const prev = state.draftLog[exId] || {};
   state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null,
                            rir: prev.rir != null ? prev.rir : null };
+  if(prev.skipped) state.draftLog[exId].skipped = true;
   clearTimeout(draftSaveTimeouts[exId]);
   draftSaveTimeouts[exId] = setTimeout(() => { saveState(); }, 600);
 }
@@ -1692,6 +1727,14 @@ function closeWeek(){
         entries[exr.id] = { name: exr.name, weight: null, reps: null, type: exr.type,
                             muscle: exr.muscle, setPattern: exr.setPattern, wFactors: exr.wFactors,
                             skipped: true, dayId: day.id };
+        return;
+      }
+      // Día entrenado, pero este ejercicio quedó afuera: no suma volumen,
+      // no progresa y no cuenta para el estancamiento. El objetivo espera.
+      if(state.draftLog[exr.id] && state.draftLog[exr.id].skipped){
+        entries[exr.id] = { name: exr.name, weight: null, reps: null, type: exr.type,
+                            muscle: exr.muscle, setPattern: exr.setPattern, wFactors: exr.wFactors,
+                            skipped: true, notDone: true, dayId: day.id };
         return;
       }
       const draft = state.draftLog[exr.id] || {};
@@ -2216,6 +2259,8 @@ function renderHistory(){
       const label = v.type === 'time' ? `${v.weight} seg${falla}` : `${v.weight} kg${series}${rirTxt}${falla}`;
       return `<tr><td>${esc(v.name)}</td><td>${label}</td></tr>`;
     }).join('');
+    const noHechos = Object.values(week.entries).filter(v => v.notDone).map(v => esc(v.name));
+    const noHechosLabel = noHechos.length ? `<p class="histfin">No hechos: ${noHechos.join(', ')}</p>` : '';
     const daysDone = week.daysDone;
     const daysLabel = daysDone
       ? `<p class="histfin">Días entrenados: ${daysDone.length ? daysDone.map(n => 'Día '+n).join(', ') : 'ninguno'}${daysDone.length < 4 ? ' · faltaron ' + (4 - daysDone.length) : ''}</p>`
@@ -2223,6 +2268,7 @@ function renderHistory(){
     return `<details class="histrow">
       <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?`<span class="badge-deload">Descarga −${week.deloadPct || 15}%</span>`:(week.adaptation?'<span class="badge-adapt">Adaptación</span>':'')}</summary>
       ${daysLabel}
+      ${noHechosLabel}
       <table class="histtable">${rows}</table>
     </details>`;
   }).join('');
