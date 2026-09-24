@@ -64,7 +64,32 @@
   .wt-aviso{font-size:12.5px;color:var(--rust);margin:8px 0 0;}
   .wt-aviso b{color:var(--rust);}
   .wt-foco{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;}
-  .wt-foco-opts{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+  .wt-foco-opts{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;align-items:center;}
+  .wt-foco > summary{cursor:pointer;display:flex;align-items:center;gap:10px;list-style:none;}
+  .wt-foco > summary::-webkit-details-marker{display:none;}
+  .wt-foco > summary::after{content:'▾';color:var(--ink-faint);font-size:11px;margin-left:auto;}
+  .wt-foco[open] > summary::after{content:'▴';}
+  .prog-count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mustard);}
+  .prog-groups{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 4px;}
+  .prog-group{text-align:left;padding:12px 14px;font-size:14px;}
+  .prog-group span{display:block;font-family:'Inter',sans-serif;font-size:11px;text-transform:none;letter-spacing:0;color:var(--ink-faint);margin-top:3px;font-weight:400;}
+  .prog-group.wt-on span{color:var(--mustard);opacity:.8;}
+  .prog-foot{font-size:12px;color:var(--ink-faint);margin:10px 0 0;}
+  .ult-ok{color:var(--sage);}
+  .ult-pausa{color:var(--ink-faint);font-style:italic;}
+  .prog-preset-lbl{font-size:11px;color:var(--ink-faint);}
+  .prog-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+  .prog-item{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer;}
+  .prog-item.on{border-color:var(--mustard);}
+  .prog-item.closed{opacity:.6;cursor:default;}
+  .prog-item input{width:17px;height:17px;accent-color:var(--mustard);margin:0;padding:0;}
+  .prog-name{font-size:13px;color:var(--ink);font-weight:600;}
+  .prog-name small{display:block;font-weight:400;font-size:11px;color:var(--ink-faint);}
+  .prog-delta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);text-align:right;}
+  .prog-item:not(.on) .prog-delta b{color:var(--ink-faint);text-decoration:line-through;}
+  .prog-item.on .prog-delta b{color:var(--mustard);}
+  .prog-empty{font-size:12.5px;color:var(--ink-faint);}
+  @media (max-width:560px){ .prog-item{grid-template-columns:22px 1fr;} .prog-delta{grid-column:2;text-align:left;} }
   .wt-foco p{font-size:12.5px;color:var(--ink-faint);margin:0;}
   .wt-foco p b{color:var(--ink-dim);}
   .day-status.foco{border-color:var(--mustard);color:var(--mustard);background:var(--mustard-dim);margin-left:6px;}
@@ -729,6 +754,9 @@ function reconcileState(saved){
         setReps: (Array.isArray(savedEx.setReps) && savedEx.setReps.length) ? savedEx.setReps : null,
         repStep: savedEx.repStep || freshEx.repStep || 1,
         stallWeeks: savedEx.stallWeeks || 0,
+        lastWeek: savedEx.lastWeek || null,
+        progPref: savedEx.progPref,
+        stash: savedEx.stash || null,
         wFactors: savedEx.wFactors !== undefined ? savedEx.wFactors : freshEx.wFactors,
         progressMode: savedEx.progressMode || freshEx.progressMode || 'peso',
       };
@@ -753,6 +781,16 @@ function reconcileState(saved){
   }
   if(!merged.progressFocus) merged.progressFocus = 'inferior';
   merged.days.forEach(d => d.exercises.forEach(e => ensureSetReps(e)));
+  // Semanas cerradas antes de esta versión: se reconstruye lastWeek desde el
+  // último cierre del historial, que guarda los objetivos que se entrenaron.
+  const ultima = (merged.history && merged.history.length) ? merged.history[merged.history.length-1] : null;
+  merged.days.forEach(d => d.exercises.forEach(e => {
+    if(e.lastWeek) return;
+    const h = ultima && ultima.entries ? ultima.entries[e.id] : null;
+    if(h && !h.skipped && h.weight != null && Array.isArray(h.targetReps) && h.targetReps.length){
+      e.lastWeek = { weight: h.weight, setReps: h.targetReps.slice(), currentRepTarget: Math.max.apply(null, h.targetReps) };
+    }
+  }));
   if(!Array.isArray(merged.rmLog)) merged.rmLog = [];
   if(!merged.wodResults) merged.wodResults = {};
   if(!Array.isArray(merged.wodRecent)) merged.wodRecent = [];
@@ -1026,6 +1064,13 @@ function addSetTo(exr){
     r.push(exr.repFloor || r[r.length-1]);
     exr.setReps = r;
   }
+  ['stash','lastWeek'].forEach(k => {
+    const t = exr[k];
+    if(t && Array.isArray(t.setReps) && t.setReps.length){
+      t.setReps = t.setReps.concat([exr.repFloor || t.setReps[t.setReps.length-1]]);
+      t.currentRepTarget = Math.max.apply(null, t.setReps);
+    }
+  });
   if(Array.isArray(exr.wFactors)){
     const w = exr.wFactors.slice();
     w.push(w[w.length-1]);
@@ -1045,6 +1090,13 @@ function removeSetFrom(exr){
     exr.setReps = r;
     exr.currentRepTarget = Math.max.apply(null, r);
   }
+  ['stash','lastWeek'].forEach(k => {
+    const t = exr[k];
+    if(t && Array.isArray(t.setReps) && t.setReps.length > 1){
+      t.setReps = t.setReps.slice(0, -1);
+      t.currentRepTarget = Math.max.apply(null, t.setReps);
+    }
+  });
   if(Array.isArray(exr.wFactors)){
     const w = exr.wFactors.slice();
     w.pop();
@@ -1109,7 +1161,9 @@ const FOCUS_LABEL = {
 
 function setFocus(f){
   state.progressFocus = f;
+  applyFocusDefaults();
   saveState(true);
+  renderDays();
   renderDeloadBanner();
 }
 
@@ -1293,7 +1347,7 @@ function renderDays(){
            <button class="small primary" onclick="closeDay(${day.id})">Cerrar día ${day.id}</button>
          </div>`;
 
-    const progresa = !state.pendingDeload && !state.pendingAdaptation && day.exercises.some(e => exerciseProgresses(e, day.id));
+    const progresa = !state.pendingDeload && !state.pendingAdaptation && day.exercises.some(e => isProgressing(e));
     const focoBadge = progresa ? '<span class="day-status foco">Progresa</span>' : '';
     const statusBadge = (isClosed
       ? '<span class="day-status done">Cerrado</span>'
@@ -1453,6 +1507,8 @@ function resolveStall(id, accion){
       exr.currentRepTarget = exr.repFloor;
     }
     exr.stallWeeks = 0;
+    exr.lastWeek = null;
+    exr.stash = null;
     delete state.draftLog[id];
   } else if(accion === 'variante'){
     rotateVariant(id);   // ya resetea el contador
@@ -1598,6 +1654,8 @@ function rotateVariant(id){
     exr.setReps = new Array(nS).fill(exr.repFloor);
   }
   exr.stallWeeks = 0;
+  exr.lastWeek = null;   // es otro ejercicio: no hay semana anterior a la que volver
+  exr.stash = null;
   exr.type = (exr.type === 'unregistered') ? 'unregistered' : exr.type;
   delete state.draftLog[id];
   saveState(true);
@@ -1720,9 +1778,12 @@ function closeWeek(){
   }catch(e){ console.error('No se pudo guardar la foto para deshacer', e); }
 
   const entries = {};
+  const antes = {};   // objetivos con los que se entrenó esta semana
+  const cumpleMap = {};
   state.days.forEach(day => {
     const dayWasDone = !!state.dayClosed[day.id];
     day.exercises.forEach(exr => {
+      antes[exr.id] = snapshotTargets(exr);
       if(!dayWasDone){
         entries[exr.id] = { name: exr.name, weight: null, reps: null, type: exr.type,
                             muscle: exr.muscle, setPattern: exr.setPattern, wFactors: exr.wFactors,
@@ -1767,6 +1828,12 @@ function closeWeek(){
       const cumple = evaluarCumplimiento(exr, loggedWeight, loggedReps, hechasPorSerie);
       entries[exr.id].rir = rir;
       entries[exr.id].cumplio = cumple;
+      entries[exr.id].held = !!exr.stash;
+      entries[exr.id].prog = isProgressing(exr);
+      // Si estaba en el grupo de la semana: una pausa acá es elección tuya,
+      // no de la rotación.
+      entries[exr.id].inFocus = exerciseProgresses(exr, day.id);
+      cumpleMap[exr.id] = cumple;
       if(!state.pendingDeload && exr.type !== 'unregistered'){
         if(cumple === true) exr.stallWeeks = 0;
         else if(cumple === false && (rir == null || rir <= 1)) exr.stallWeeks = (exr.stallWeeks || 0) + 1;
@@ -1789,14 +1856,16 @@ function closeWeek(){
             ? hechasPorSerie.map(x => Math.max(1, Math.min(x != null ? x : exr.repFloor, exr.repCeiling)))
             : (exr.setPattern || [0]).map(o => Math.max(1, Math.min(base + o, exr.repCeiling)));
           exr.currentRepTarget = Math.max.apply(null, exr.setReps);
-          if(exerciseProgresses(exr, day.id)){
+          {
             const next = computeNextStep(exr, loggedWeight, exr.currentRepTarget, exr.setReps.slice());
             exr.currentWeight = next.weight;
             if(next.setReps) exr.setReps = next.setReps;
             exr.currentRepTarget = Math.max.apply(null, exr.setReps);
           }
         }
-      } else if(exerciseProgresses(exr, day.id) && !alFallo){
+      } else if(!exr.stash && !alFallo){
+        // Se calcula la progresión de todo lo que cumplió. Qué se aplica la
+        // semana que viene lo deciden los interruptores (con el foco como preset).
         const next = computeNextStep(exr, loggedWeight, loggedReps, hechasPorSerie);
         exr.currentWeight = next.weight;
         if(exr.type === 'time'){
@@ -1810,6 +1879,19 @@ function closeWeek(){
       // Fuera del foco de la semana: el objetivo se mantiene.
     });
   });
+
+  // Si fue semana de adaptación, la progresión que había quedado en suspenso
+  // retoma ahora. Y cada ejercicio recuerda con qué objetivos se entrenó,
+  // para que la próxima adaptación sepa a qué volver.
+  state.days.forEach(d => d.exercises.forEach(exr => {
+    if(exr.stash){
+      // En pausa: si repetiste y cumpliste (o no lo entrenaste), la
+      // progresión guardada sigue en pie. Si fallaste, se descarta.
+      if(cumpleMap[exr.id] !== false) applyTargets(exr, exr.stash);
+      exr.stash = null;
+    }
+    exr.lastWeek = antes[exr.id] || null;
+  }));
 
   state.history.push({
     weekNumber: state.weekNumber,
@@ -1854,6 +1936,8 @@ function closeWeek(){
   state.draftLog = {};
   state.dayClosed = { 1:false, 2:false, 3:false, 4:false };
   state.finisherStatus = { day2:{done:false, note:'', result:''}, day4:{done:false, note:'', result:''} };
+  applyFocusDefaults();
+  state.uiPrefs.progPanelOpen = true;   // mostrar qué progresa en la semana nueva
   saveState(true);
   render();
   window.scrollTo({top:0, behavior:'smooth'});
@@ -1907,10 +1991,185 @@ function markDeload(pct){
   renderDeloadBanner();
 }
 
+function fmtTarget(t, exr){
+  if(!t) return '—';
+  if(exr.type === 'time') return `${t.weight} seg`;
+  const sr = (t.setReps && t.setReps.length) ? t.setReps.join('/') : (t.currentRepTarget != null ? t.currentRepTarget : '—');
+  return `${t.weight}kg · ${sr}`;
+}
+
+// Qué pasó con este ejercicio la última vez que tuvo una progresión en juego.
+function lastProgState(exr){
+  const hist = state.history || [];
+  for(let i = hist.length - 1; i >= 0; i--){
+    const e = hist[i].entries && hist[i].entries[exr.id];
+    if(!e) continue;
+    // Semanas en que su grupo no estaba elegido: la pausa fue de la rotación,
+    // no dice nada. Se busca la última vez que le tocó.
+    if(e.inFocus === false) continue;
+    if(e.prog) return { week: hist[i].weekNumber, txt: 'progresó', ok: true };
+    if(e.held) return { week: hist[i].weekNumber, txt: 'lo apagaste', ok: false };
+  }
+  return null;
+}
+
+// Panel "Qué progresa esta semana": elegís tren inferior o superior, y dentro
+// del grupo cada ejercicio tiene su interruptor, que recuerda tu última elección.
+function progPanelHtml(f){
+  const grupo = (f === 'superior') ? 'superior' : 'inferior';
+  const diasGrupo = FOCUS_DAYS[grupo];
+  const enGrupo = [], sinCambios = [];
+  let pausadosOtro = 0;
+  state.days.forEach(d => d.exercises.forEach(e => {
+    const delGrupo = diasGrupo.includes(d.id);
+    if(!delGrupo){ if(e.stash) pausadosOtro++; return; }
+    if(hasProgression(e)){
+      enGrupo.push({ d, e, on: !e.stash, cerrado: !!state.dayClosed[d.id],
+                     desde: e.lastWeek, hacia: e.stash || snapshotTargets(e), ult: lastProgState(e) });
+    } else if(e.type !== 'unregistered'){
+      sinCambios.push(esc(e.name));
+    }
+  }));
+  const activos = enGrupo.filter(i => i.on).length;
+  const sugerido = (state.progressFocus === 'inferior' || state.progressFocus === 'superior') ? state.progressFocus : null;
+
+  const btn = (k, label, dias) => `<button class="prog-group ${grupo===k && sugerido ? 'wt-on' : ''}" onclick="setFocus('${k}')">
+      ${label}<span>${dias}</span></button>`;
+
+  const filas = enGrupo.length
+    ? enGrupo.map(i => `<label class="prog-item ${i.on ? 'on' : ''} ${i.cerrado ? 'closed' : ''}">
+        <input type="checkbox" ${i.on ? 'checked' : ''} ${i.cerrado ? 'disabled' : ''} onchange="toggleProgression('${i.e.id}')">
+        <span class="prog-name">${esc(i.e.name)}<small>Día ${i.d.id}${i.cerrado ? ' · cerrado' : ''}${i.ult ? ` · <span class="${i.ult.ok ? 'ult-ok' : 'ult-pausa'}">S${i.ult.week}: ${i.ult.txt}</span>` : ''}</small></span>
+        <span class="prog-delta">${fmtTarget(i.desde, i.e)} → <b>${fmtTarget(i.hacia, i.e)}</b></span>
+      </label>`).join('')
+    : `<p class="prog-empty">Ningún ejercicio de tren ${grupo} tiene progresión disponible esta semana: aparecen acá los que cumplieron su objetivo al cerrar la anterior.</p>`;
+
+  const otro = grupo === 'inferior' ? 'superior' : 'inferior';
+  return `<details class="wt-foco" ${state.uiPrefs.progPanelOpen ? 'open' : ''} ontoggle="state.uiPrefs.progPanelOpen = this.open; saveLocalOnly();">
+    <summary><span class="wt-lbl">Qué progresa esta semana</span><span class="prog-count">tren ${grupo} · ${activos} de ${enGrupo.length}</span></summary>
+    <div class="prog-groups">
+      ${btn('inferior','Tren inferior','días 1 y 3')}
+      ${btn('superior','Tren superior','días 2 y 4')}
+    </div>
+    <div class="prog-list">${filas}</div>
+    ${sinCambios.length ? `<p class="prog-empty">Sin progresión disponible: ${sinCambios.join(', ')}.</p>` : ''}
+    <p class="prog-foot">Tren ${otro} repite los objetivos de la semana pasada${pausadosOtro ? ` (${pausadosOtro} progresiones guardadas para cuando le toque)` : ''}. Los interruptores recuerdan tu última elección, y al cerrar la semana el grupo rota solo.</p>
+  </details>`;
+}
+
 function weekTypeLabel(){
   if(state.pendingDeload) return 'descarga';
   if(state.pendingAdaptation) return 'adaptación';
   return 'progresión';
+}
+
+// ---- Adaptación que afecta ESTA semana ----
+// Cada ejercicio guarda en lastWeek los objetivos que tuvo la semana anterior.
+// Elegir adaptación vuelve los días no entrenados a esos objetivos y deja la
+// progresión ya calculada en stash; al cerrar la semana, la progresión retoma.
+function snapshotTargets(exr){
+  return { weight: exr.currentWeight,
+           setReps: Array.isArray(exr.setReps) ? exr.setReps.slice() : null,
+           currentRepTarget: exr.currentRepTarget };
+}
+
+function applyTargets(exr, t){
+  if(!t) return;
+  exr.currentWeight = t.weight;
+  if(exr.type !== 'time' && Array.isArray(t.setReps) && t.setReps.length){
+    exr.setReps = t.setReps.slice();
+    exr.currentRepTarget = Math.max.apply(null, exr.setReps);
+  } else {
+    exr.currentRepTarget = t.currentRepTarget;
+  }
+}
+
+function activateAdaptation(){
+  let n = 0;
+  state.days.forEach(day => {
+    if(state.dayClosed[day.id]) return;        // lo ya entrenado no se toca
+    day.exercises.forEach(exr => {
+      const lw = exr.lastWeek;
+      if(!lw || lw.weight == null || exr.stash || exr.type === 'unregistered') return;
+      const igual = lw.weight === exr.currentWeight && JSON.stringify(lw.setReps) === JSON.stringify(exr.setReps);
+      if(igual) return;                          // no había progresado: nada que repetir
+      exr.stash = snapshotTargets(exr);
+      applyTargets(exr, lw);
+      n++;
+    });
+  });
+  return n;
+}
+
+function deactivateAdaptation(){
+  state.days.forEach(day => {
+    if(state.dayClosed[day.id]) return;
+    day.exercises.forEach(exr => {
+      if(exr.stash){ applyTargets(exr, exr.stash); exr.stash = null; }
+    });
+  });
+}
+
+function mismosObjetivos(a, b){
+  if(!a || !b) return false;
+  return a.weight === b.weight && JSON.stringify(a.setReps) === JSON.stringify(b.setReps)
+      && (a.setReps || b.setReps || a.currentRepTarget === b.currentRepTarget);
+}
+
+// ¿Este ejercicio tiene una progresión aplicada esta semana?
+function isProgressing(exr){
+  return !exr.stash && !!exr.lastWeek && exr.lastWeek.weight != null
+      && !mismosObjetivos(exr.lastWeek, snapshotTargets(exr));
+}
+
+// ¿Tiene una progresión disponible (aplicada o en pausa)?
+function hasProgression(exr){
+  return !!exr.stash || isProgressing(exr);
+}
+
+// Pausa: vuelve a los objetivos de la semana pasada y guarda la progresión.
+function holdExercise(exr){
+  if(exr.stash || !isProgressing(exr)) return false;
+  exr.stash = snapshotTargets(exr);
+  applyTargets(exr, exr.lastWeek);
+  return true;
+}
+
+function releaseExercise(exr){
+  if(!exr.stash) return false;
+  applyTargets(exr, exr.stash);
+  exr.stash = null;
+  return true;
+}
+
+// El foco funciona como preset de los interruptores de ESTA semana.
+// El grupo elegido (inferior / superior) define qué puede progresar. Dentro
+// del grupo, cada ejercicio respeta la última elección que hiciste con su
+// interruptor (progPref): si la vez pasada lo apagaste, arranca apagado.
+function applyFocusDefaults(){
+  state.days.forEach(day => {
+    if(state.dayClosed[day.id]) return;
+    day.exercises.forEach(exr => {
+      if(exerciseProgresses(exr, day.id) && exr.progPref !== false) releaseExercise(exr);
+      else holdExercise(exr);
+    });
+  });
+}
+
+function toggleProgression(id){
+  const exr = findExercise(id);
+  if(!exr) return;
+  if(exr.stash) releaseExercise(exr); else holdExercise(exr);
+  exr.progPref = !exr.stash;   // se recuerda para la próxima vez que toque este grupo
+  saveState();
+  renderDays();
+  renderDeloadBanner();
+}
+
+function countAdapted(){
+  let n = 0;
+  state.days.forEach(d => d.exercises.forEach(e => { if(e.stash) n++; }));
+  return n;
 }
 
 // Borra únicamente los valores precargados automáticamente por la descarga
@@ -1922,19 +2181,29 @@ function clearAutoDrafts(){
 }
 
 function setWeekType(tipo, pct){
+  const cerrados = state.days.filter(d => state.dayClosed[d.id]).length;
+  if(cerrados > 0 && !confirm(`Ya cerraste ${cerrados} día(s) de esta semana. El cambio de tipo afecta solo a los días que faltan.\n\n¿Seguir?`)) return;
   if(tipo === 'normal'){
     if(state.pendingDeload && !confirm('Volver a semana de progresión y restaurar los pesos normales?')) return;
+    if(state.pendingAdaptation) deactivateAdaptation();
     state.pendingDeload = false;
     state.pendingAdaptation = false;
     state.deloadPct = null;
     clearAutoDrafts();
+    applyFocusDefaults();
   } else if(tipo === 'adaptacion'){
-    state.pendingAdaptation = true;
-    state.pendingDeload = false;
-    state.deloadPct = null;
-    // Solo se sacan los valores que puso la descarga; lo que cargaste vos queda.
-    clearAutoDrafts();
+    if(!state.pendingAdaptation){
+      state.pendingDeload = false;
+      state.deloadPct = null;
+      // Solo se sacan los valores que puso la descarga; lo que cargaste vos queda.
+      clearAutoDrafts();
+      state.pendingAdaptation = true;
+      activateAdaptation();
+    }
   } else if(tipo === 'descarga'){
+    // La descarga parte de los objetivos completos: se liberan las pausas.
+    deactivateAdaptation();
+    state.pendingAdaptation = false;
     markDeload(pct);
     return;
   }
@@ -1954,17 +2223,13 @@ function renderDeloadBanner(){
     : '';
 
   const f = state.progressFocus || 'todo';
-  const focoHtml = tipo !== 'progresión' ? '' : `<div class="wt-foco">
-    <span class="wt-lbl">Foco de esta semana</span>
-    <div class="wt-foco-opts">
-      ${['inferior','superior','basicos','todo'].map(k => `<button class="small ${f===k?'wt-on':''}" onclick="setFocus('${k}')">${{inferior:'Tren inferior',superior:'Tren superior',basicos:'Solo básicos',todo:'Todo'}[k]}</button>`).join('')}
-    </div>
-    <p>Solo progresa <b>${FOCUS_LABEL[f]}</b>. El resto mantiene su objetivo. Se alterna solo al cerrar la semana.</p>
-  </div>`;
+  const focoHtml = tipo !== 'progresión' ? '' : progPanelHtml(f);
 
   const explica = {
-    'progresión': 'Al cerrar la semana, los objetivos suben: una rep más, o más peso si llegaste al techo.',
-    'adaptación': 'Los objetivos quedan congelados: repetís lo mismo la semana que viene. Sirve para consolidar el estímulo y limpiar técnica sin sumar fatiga.',
+    'progresión': 'Entrenás los objetivos de esta semana. Al cerrarla, suben para la próxima: una rep más en una serie, o más peso si llegaste al techo.',
+    'adaptación': (countAdapted() > 0
+      ? `Esta semana repetís los objetivos de la semana pasada (${countAdapted()} ejercicios volvieron atrás). Al cerrarla, retomás la progresión donde la dejaste.`
+      : 'No hay registro de la semana pasada al que volver: esta semana entrenás los objetivos actuales y al cerrarla se mantienen.'),
     'descarga': `Los pesos bajaron un ${pct}%. Los objetivos no se recalculan: la semana siguiente volvés a donde estabas.`
   }[tipo];
 
