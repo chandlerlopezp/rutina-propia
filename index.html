@@ -154,6 +154,7 @@
   .ex-skipped{opacity:.55;}
   .ex-skipped .exname{text-decoration:line-through;}
   .skip-btn{margin-left:6px;}
+  .up-hint{font-size:12px;color:var(--sage);background:var(--sage-dim);border:1px solid var(--sage);border-radius:6px;padding:7px 10px;margin-top:8px;}
   .rir-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
   .rir-lbl{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
   .rir-opts{display:flex;gap:4px;}
@@ -745,6 +746,10 @@ function extraDefs(){
 // Los tres básicos prioritarios de la estructura de 3 días.
 function mainTres(){ return ['d1e1','d2e1','d3e1']; }
 
+// Se incrementa cuando cambian las series del armado de 3 días, para
+// aplicarlas una vez a quien ya lo esté usando.
+function layoutTresVersion(){ return 2; }
+
 function layoutTres(){
   return [
     { id:1, title:'Día 1', pattern:'Sentadilla', icon:'🦵', color:'red', slots:[
@@ -752,12 +757,12 @@ function layoutTres(){
       {id:'d1e2', rot:'A'}, {id:'d2e9', rot:'A'},
       {id:'d2e7', rot:'A', note:'en superserie con el curl'},
       {id:'d2e8', rot:'A', note:'en superserie con el face pull'},
-      {id:'d3e2', rot:'B'}, {id:'d4e1', rot:'B'}, {id:'d1e4', rot:'B'} ]},
+      {id:'d3e2', rot:'B'}, {id:'d4e1', rot:'B'}, {id:'d1e4', rot:'B', sets:3} ]},
     { id:2, title:'Día 2', pattern:'Press banca', icon:'💪', color:'blue', slots:[
       {id:'d2e1', sets:4},
       {id:'d4e3', rot:'A', note:'agarre supino, palmas arriba · mismo peso, reps descendentes'},
-      {id:'d2e5', rot:'A'}, {id:'d3e3', rot:'A'},
-      {id:'d2e2', rot:'B'}, {id:'d2e4', rot:'B'}, {id:'d4e5', rot:'B'} ]},
+      {id:'d2e5', rot:'A'}, {id:'d4e5', rot:'A'},
+      {id:'d2e2', rot:'B'}, {id:'d2e4', rot:'B'}, {id:'d3e3', rot:'B', sets:3} ]},
     { id:3, title:'Día 3', pattern:'Peso muerto', icon:'🏋️', color:'green', slots:[
       {id:'d3e1'},
       {id:'d4e2', rot:'A'}, {id:'d3e4', rot:'A'}, {id:'d4e1b', rot:'A'},
@@ -839,6 +844,13 @@ function mergeExercise(freshEx, savedEx){
   };
 }
 
+// Tope de series por ejercicio. En las planillas de Tomás casi todo estaba en
+// 2-3 series y muy pocas veces llegaba a 4: el volumen alto lo conseguía con
+// más ejercicios, no apilando series en uno. La serie 5 o 6 de un mismo
+// movimiento llega con fatiga local y rinde menos que esa misma serie en otro
+// ejercicio. Lo que importa es el total semanal por grupo muscular.
+const MAX_SETS = 4;
+
 let state = loadState();
 
 // Combina datos guardados (progreso real: pesos, reps, historial) con la
@@ -864,6 +876,21 @@ function reconcileState(saved){
   merged.days.forEach(d => d.exercises.forEach(e => enUso.add(e.id)));
   merged.reserve = {};
   Object.keys(pool).forEach(id => { if(!enUso.has(id)) merged.reserve[id] = pool[id]; });
+  // Armado de 3 días actualizado: se aplican las series nuevas una sola vez.
+  if((saved.layoutTresVer || 1) < layoutTresVersion()){
+    layoutTres().forEach(L => L.slots.forEach(s => {
+      const e = pool[s.id];
+      if(!e || !s.sets) return;
+      if(merged.structure === 'tres'){
+        let g = 0;
+        while(seriesDe(e) < s.sets && g++ < 10){ if(!addSetTo(e)) break; }
+        while(seriesDe(e) > s.sets && g++ < 20){ if(!removeSetFrom(e)) break; }
+      } else if(e.setsBy){
+        delete e.setsBy.tres;   // al pasar a 3 días toma las series del armado
+      }
+    }));
+  }
+  merged.layoutTresVer = layoutTresVersion();
   if(!merged.uiPrefs) merged.uiPrefs = { openAcc: ['day1'], scrollY: 0, activeTab: 'rutina' };
   if(!merged.draftLog) merged.draftLog = {};
   if(!merged.dayClosed) merged.dayClosed = {};
@@ -1149,12 +1176,7 @@ function targetText(exr){
 // Qué ejercicios progresan esta semana. Progresar todo a la vez empuja el
 // volumen ~11% semanal, insostenible: en las planillas de Tomás el promedio
 // real era +0,5% y más de la mitad de las semanas bajaba. Por eso el foco rota.
-// Tope de series por ejercicio. En las planillas de Tomás casi todo estaba en
-// 2-3 series y muy pocas veces llegaba a 4: el volumen alto lo conseguía con
-// más ejercicios, no apilando series en uno. La serie 5 o 6 de un mismo
-// movimiento llega con fatiga local y rinde menos que esa misma serie en otro
-// ejercicio. Lo que importa es el total semanal por grupo muscular.
-const MAX_SETS = 4;
+// (MAX_SETS se declara más arriba: la carga del estado la necesita.)
 
 // Suma una serie replicando el último escalón del patrón. El patrón guarda
 // offsets de reps respecto del top set, así que copiar el último mantiene la
@@ -1442,6 +1464,9 @@ function renderDays(){
         ${rampFor(exr, wVal)}
         ${cfg}
         ${inputs}
+        <div class="up-hint" id="hint-${exr.id}" style="display:${(exr.type === 'weight' && exr.currentWeight != null && draft.weight != null && draft.weight > exr.currentWeight && !state.pendingDeload) ? 'block' : 'none'};">
+          Más peso que el objetivo: al cerrar la semana pasa a ser tu nueva base, con las reps que hagas. No cuenta como falla.
+        </div>
         ${rirHtml(exr, draft, isClosed)}
       </div>`;
     }).join('');
@@ -1702,6 +1727,12 @@ function saveDraft(exId){
   const prev = state.draftLog[exId] || {};
   state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null,
                            rir: prev.rir != null ? prev.rir : null };
+  const exr = findExercise(exId);
+  const hint = document.getElementById('hint-' + exId);
+  if(hint && exr){
+    const sube = exr.type === 'weight' && exr.currentWeight != null && weight != null && weight > exr.currentWeight && !state.pendingDeload;
+    hint.style.display = sube ? 'block' : 'none';
+  }
   if(prev.skipped) state.draftLog[exId].skipped = true;
   clearTimeout(draftSaveTimeouts[exId]);
   draftSaveTimeouts[exId] = setTimeout(() => { saveState(); }, 600);
@@ -1935,8 +1966,13 @@ function closeWeek(){
       // capacidad — mala semana, dolor, poco tiempo — y no cuenta.
       const rir = (draft.rir != null) ? draft.rir : null;
       const cumple = evaluarCumplimiento(exr, loggedWeight, loggedReps, hechasPorSerie);
+      // ¿Usaste más peso que el objetivo? Es una decisión tuya de subir, no
+      // una falla: ese peso pasa a ser la base, sin contar estancamiento.
+      const subioPeso = !state.pendingDeload && exr.type === 'weight' && exr.currentWeight != null
+                        && loggedWeight != null && loggedWeight > exr.currentWeight;
       entries[exr.id].rir = rir;
-      entries[exr.id].cumplio = cumple;
+      entries[exr.id].cumplio = subioPeso ? null : cumple;
+      entries[exr.id].subioPeso = subioPeso;
       entries[exr.id].held = !!exr.stash;
       entries[exr.id].prog = isProgressing(exr);
       // Si estaba en el grupo de la semana: una pausa acá es elección tuya,
@@ -1944,13 +1980,25 @@ function closeWeek(){
       entries[exr.id].inFocus = exerciseProgresses(exr, day.id);
       cumpleMap[exr.id] = cumple;
       if(!state.pendingDeload && exr.type !== 'unregistered'){
-        if(cumple === true) exr.stallWeeks = 0;
+        if(cumple === true || subioPeso) exr.stallWeeks = 0;
         else if(cumple === false && (rir == null || rir <= 1)) exr.stallWeeks = (exr.stallWeeks || 0) + 1;
       }
       // Cumpliste pero al fallo (RIR 0): se consolida en vez de avanzar.
       const alFallo = (cumple === true && rir === 0);
 
-      if(state.pendingDeload || state.pendingAdaptation){
+      if(subioPeso){
+        // Nueva base: el peso que usaste, con las reps que hiciste en cada serie
+        // (dentro del rango). La próxima vez repetís eso y desde ahí progresa.
+        const objetivo = (exr.setReps && exr.setReps.length) ? exr.setReps : deriveSetReps(exr);
+        const hechas = Array.isArray(hechasPorSerie) ? hechasPorSerie : [];
+        exr.currentWeight = loggedWeight;
+        exr.setReps = objetivo.map((_, i) => {
+          const r = hechas[i] != null ? hechas[i] : exr.repFloor;
+          return Math.max(exr.repFloor, Math.min(r, exr.repCeiling));
+        });
+        exr.currentRepTarget = Math.max.apply(null, exr.setReps);
+        exr.stash = null;   // la progresión que estaba en pausa ya no aplica
+      } else if(state.pendingDeload || state.pendingAdaptation){
         // Objetivos sin cambios. En descarga porque la carga fue menor a
         // propósito; en adaptación porque el punto es repetir el mismo
         // estímulo y darle al cuerpo la ventana para consolidarlo.
@@ -2792,7 +2840,8 @@ function renderHistory(){
     const rows = Object.entries(week.entries).filter(([,v]) => v.weight != null && !v.skipped).map(([id, v]) => {
       const series = (v.setReps && v.setReps.length) ? ' · ' + v.setReps.join('/') : (v.reps != null ? ' × ' + v.reps : '');
       const rirTxt = v.rir != null ? ` <span style="color:var(--ink-faint);">RIR ${v.rir === 4 ? '4+' : v.rir}</span>` : '';
-      const falla = v.cumplio === false ? ' <span style="color:var(--rust);">✗</span>' : '';
+      const falla = v.cumplio === false ? ' <span style="color:var(--rust);">✗</span>'
+                  : (v.subioPeso ? ' <span style="color:var(--sage);">↑ peso</span>' : '');
       const label = v.type === 'time' ? `${v.weight} seg${falla}` : `${v.weight} kg${series}${rirTxt}${falla}`;
       return `<tr><td>${esc(v.name)}</td><td>${label}</td></tr>`;
     }).join('');
