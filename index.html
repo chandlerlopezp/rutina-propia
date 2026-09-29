@@ -75,6 +75,33 @@
   .prog-group span{display:block;font-family:'Inter',sans-serif;font-size:11px;text-transform:none;letter-spacing:0;color:var(--ink-faint);margin-top:3px;font-weight:400;}
   .prog-group.wt-on span{color:var(--mustard);opacity:.8;}
   .prog-foot{font-size:12px;color:var(--ink-faint);margin:10px 0 0;}
+  .es-day{background:var(--surface);border-radius:10px;border-top:3px solid var(--ink-faint);padding:14px 16px;margin-bottom:14px;}
+  .es-day.acc-red{border-top-color:var(--rust);} .es-day.acc-blue{border-top-color:var(--blue);}
+  .es-day.acc-green{border-top-color:var(--sage);} .es-day.acc-amber{border-top-color:var(--mustard);}
+  .es-day-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .es-day-head b{font-family:'Oswald',sans-serif;font-size:16px;text-transform:uppercase;display:block;}
+  .es-day-head span:not(.acc-icon){font-size:12px;color:var(--ink-faint);}
+  .es-tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--mustard);margin-bottom:4px;}
+  .es-day ul{list-style:none;margin:0;padding:0;}
+  .es-day li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px dashed var(--line);}
+  .es-day li:first-child{border-top:none;}
+  .es-name{font-size:13px;color:var(--ink);font-weight:600;}
+  .es-name small{display:block;font-weight:400;font-size:11px;color:var(--ink-faint);}
+  .es-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-dim);text-align:right;white-space:nowrap;}
+  .es-meta span{color:var(--ink-faint);}
+  .es-fixed{background:var(--surface-2);border-radius:8px;padding:8px 12px;margin-bottom:10px;}
+  .es-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .es-col{border:1px solid var(--line);border-radius:8px;padding:8px 12px;}
+  .es-col.es-now{border-color:var(--mustard);background:var(--mustard-dim);}
+  .es-col-head{display:flex;justify-content:space-between;align-items:center;font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink);margin-bottom:2px;}
+  .es-total{font-size:11px;color:var(--ink-faint);margin-top:6px;border-top:1px solid var(--line);padding-top:6px;}
+  .es-opt{font-size:13px;color:var(--ink-dim);margin:0;}
+  .es-4d{background:var(--surface);border-radius:10px;padding:12px 16px;margin-top:8px;}
+  .es-4d summary{cursor:pointer;font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:14px;color:var(--ink-dim);}
+  .es-mini{padding:8px 0;border-top:1px dashed var(--line);font-size:13px;color:var(--ink);}
+  .es-mini:first-of-type{border-top:none;margin-top:8px;}
+  .es-mini span{display:block;font-size:12px;color:var(--ink-faint);margin-top:2px;}
+  @media (max-width:640px){ .es-cols{grid-template-columns:1fr;} }
   .prog-sec{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-faint);margin:14px 0 2px;}
   .wt-struct{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line);}
   .wt-struct-opts{display:flex;gap:6px;}
@@ -345,11 +372,12 @@
   <div id="deloadBanner"></div>
 
   <div class="maintabs">
-    <button class="tabbtn active" onclick="showMain('rutina', this)">Rutina de esta semana</button>
-    <button class="tabbtn" onclick="showMain('historial', this)">Historial</button>
-    <button class="tabbtn" onclick="showMain('estadisticas', this)">Estadísticas</button>
-    <button class="tabbtn" onclick="showMain('wods', this)">WODs</button>
-    <button class="tabbtn" onclick="showMain('rm', this)">Marcas / RM</button>
+    <button class="tabbtn active" data-tab="rutina" onclick="showMain('rutina', this)">Rutina de esta semana</button>
+    <button class="tabbtn" data-tab="estructura" onclick="showMain('estructura', this)">Estructura</button>
+    <button class="tabbtn" data-tab="historial" onclick="showMain('historial', this)">Historial</button>
+    <button class="tabbtn" data-tab="estadisticas" onclick="showMain('estadisticas', this)">Estadísticas</button>
+    <button class="tabbtn" data-tab="wods" onclick="showMain('wods', this)">WODs</button>
+    <button class="tabbtn" data-tab="rm" onclick="showMain('rm', this)">Marcas / RM</button>
   </div>
 
   <div id="panel-rutina" class="panel active">
@@ -370,6 +398,10 @@
     </div>
     <h2 style="font-size:18px;margin:32px 0 16px;">Historial de semanas</h2>
     <div id="histMount"></div>
+  </div>
+
+  <div id="panel-estructura" class="panel">
+    <div id="estructuraMount"></div>
   </div>
 
   <div id="panel-wods" class="panel">
@@ -1756,12 +1788,14 @@ function showMain(name, btn){
   document.getElementById('panel-historial').classList.toggle('active', name==='historial');
   document.getElementById('panel-estadisticas').classList.toggle('active', name==='estadisticas');
   document.getElementById('panel-wods').classList.toggle('active', name==='wods');
+  document.getElementById('panel-estructura').classList.toggle('active', name==='estructura');
   document.getElementById('panel-rm').classList.toggle('active', name==='rm');
   state.uiPrefs.activeTab = name;
   saveLocalOnly();
   if(name === 'historial'){ renderHistory(); renderWodHistory(); }
   if(name === 'estadisticas') renderStats();
   if(name === 'wods') renderWodLibrary();
+  if(name === 'estructura') renderEstructura();
   if(name === 'rm') renderRM();
 }
 
@@ -2364,6 +2398,72 @@ function aplicarEstructuraLogin(){
   const k = estructuraLogin;
   estructuraLogin = null;
   if((state.structure || 'cuatro') !== k) switchStructure(k);
+}
+
+// Resumen de la estructura de 3 días: qué se hace cada día en la semana A y B.
+function renderEstructura(){
+  const m = document.getElementById('estructuraMount');
+  if(!m) return;
+  const pool = {};
+  allExercises(state).forEach(e => { pool[e.id] = e; });
+  const enTres = state.structure === 'tres';
+  const rot = state.rotation || 'A';
+
+  // Series que tendría el ejercicio en la estructura de 3 días.
+  const series = (e, s) => enTres ? seriesDe(e) : ((e.setsBy && e.setsBy.tres) || s.sets || seriesDe(e));
+  const linea = s => {
+    const e = pool[s.id];
+    if(!e) return '';
+    const obj = e.type === 'unregistered' ? 'sin registrar' : fmtTarget(snapshotTargets(e), e);
+    return `<li>
+      <span class="es-name">${esc(e.name)}${s.note ? `<small>${esc(s.note)}</small>` : ''}</span>
+      <span class="es-meta">${series(e, s)} series<br><span>${obj}</span></span>
+    </li>`;
+  };
+  const suma = slots => slots.reduce((a, s) => a + (pool[s.id] ? series(pool[s.id], s) : 0), 0);
+
+  const dias = layoutTres().map(L => {
+    const fijos = L.slots.filter(s => !s.rot);
+    const colA = L.slots.filter(s => s.rot === 'A');
+    const colB = L.slots.filter(s => s.rot === 'B');
+    const col = (k, slots) => `<div class="es-col ${enTres && rot === k ? 'es-now' : ''}">
+        <div class="es-col-head">Semana ${k}${enTres && rot === k ? '<span class="day-status done">esta semana</span>' : ''}</div>
+        <ul>${slots.map(linea).join('')}</ul>
+        <div class="es-total">Sesión completa: ${suma(fijos) + suma(slots)} series</div>
+      </div>`;
+    return `<div class="es-day acc-${L.color}">
+      <div class="es-day-head"><span class="acc-icon">${L.icon}</span><div><b>${L.title}</b><span>${L.pattern}</span></div></div>
+      <div class="es-fixed"><div class="es-tag">Todas las semanas</div><ul>${fijos.map(linea).join('')}</ul></div>
+      <div class="es-cols">${col('A', colA)}${col('B', colB)}</div>
+    </div>`;
+  }).join('');
+
+  const d4 = `<div class="es-day acc-amber">
+    <div class="es-day-head"><span class="acc-icon">🔥</span><div><b>Día 4</b><span>Opcional</span></div></div>
+    <p class="es-opt">Metabólicos o aeróbico, cuando puedas. Si la semana viene pesada, se saltea sin culpa.</p>
+  </div>`;
+
+  const intro = enTres
+    ? `<p class="chart-note">Los básicos se hacen todas las semanas; los accesorios alternan entre A y B al cerrar cada semana. <b style="color:var(--mustard);">Esta semana toca ${rot}.</b></p>`
+    : `<p class="chart-note">Hoy estás usando la estructura de 4 días. Así quedaría la de 3, con tus pesos actuales.</p>
+       <button class="small primary" style="margin-bottom:16px;" onclick="switchStructure('tres'); renderEstructura();">Usar la estructura de 3 días</button>`;
+
+  // Estructura de 4 días, como referencia
+  const cuatro = layoutFor('cuatro').map(L => `<div class="es-mini">
+      <b>${L.title}</b> · ${L.pattern}
+      <span>${L.slots.map(s => pool[s.id] ? esc(pool[s.id].name) : '').filter(Boolean).join(' · ')}</span>
+    </div>`).join('');
+
+  m.innerHTML = `
+    <h2 style="font-size:18px;margin-bottom:4px;">Estructura de 3 días + opcional</h2>
+    ${intro}
+    ${dias}
+    ${d4}
+    <details class="es-4d" ${!enTres ? 'open' : ''}>
+      <summary>Estructura de 4 días</summary>
+      ${cuatro}
+      ${enTres ? `<button class="small" style="margin-top:10px;" onclick="switchStructure('cuatro'); renderEstructura();">Volver a 4 días</button>` : ''}
+    </details>`;
 }
 
 function weekTypeLabel(){
@@ -3128,10 +3228,9 @@ function restoreUiState(){
   // restaurar pestaña activa
   const savedTab = state.uiPrefs.activeTab || 'rutina';
   if(savedTab !== 'rutina'){
-    const btn = Array.from(document.querySelectorAll('.maintabs .tabbtn'))
-      .find(b => b.textContent.toLowerCase().includes(
-        savedTab === 'historial' ? 'historial' : 'estad'
-      ));
+    // Por identificador: antes se buscaba por texto y WODs / Marcas
+    // restauraban con el botón de Estadísticas marcado.
+    const btn = document.querySelector(`.maintabs .tabbtn[data-tab="${savedTab}"]`);
     if(btn) showMain(savedTab, btn);
   }
   // restaurar scroll, esperando a que el layout esté pintado
