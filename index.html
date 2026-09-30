@@ -186,7 +186,9 @@
   .ex-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
   .ex-right .pill{margin-right:0;}
   .ex-state{display:flex;gap:6px;}
-  .ex-done{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--sage);}
+  .done-btn{padding:4px 10px;font-size:11px;}
+  .done-btn.is-done, .done-btn.is-done:hover{background:var(--sage);border-color:var(--sage);color:var(--bg);font-weight:600;}
+  .done-btn.is-done:disabled{opacity:.85;}
   .ex-stall{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--rust);}
   .ex-actions{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
   .ex-skipped{opacity:.55;}
@@ -1506,8 +1508,9 @@ function renderDays(){
           <span class="ex-right">
             ${targetText(exr)}
             <span class="ex-state">
-              <span class="ex-done" id="st-${exr.id}" style="display:${cargado ? 'inline-block' : 'none'};">✓ cargado</span>
               ${estancado ? '<span class="ex-stall">estancado</span>' : ''}
+              <button class="small done-btn ${cargado ? 'is-done' : ''}" id="done-${exr.id}" ${isClosed ? 'disabled' : ''}
+                onclick="event.stopPropagation(); toggleDone('${exr.id}')">${cargado ? '✓ Hecho' : 'Marcar hecho'}</button>
             </span>
           </span>
         </div>
@@ -1619,6 +1622,41 @@ function renderDays(){
     const card = mount.querySelector(`[data-acc="${key}"]`);
     if(card) card.classList.add('open');
   });
+}
+
+function pintarHecho(id, hecho){
+  const b = document.getElementById('done-' + id);
+  if(!b) return;
+  b.classList.toggle('is-done', hecho);
+  b.textContent = hecho ? '✓ Hecho' : 'Marcar hecho';
+}
+
+// "Marcar hecho": registra lo que está en los campos (por defecto, el
+// objetivo) como cumplido, sin tener que tocar nada. Tocarlo de nuevo lo
+// desmarca y borra lo cargado en ese ejercicio.
+function toggleDone(id){
+  const d = state.draftLog[id];
+  if(d && !d.auto && d.weight != null){
+    if(!confirm('¿Desmarcar este ejercicio? Se borran los valores cargados y vuelve al objetivo.')) return;
+    delete state.draftLog[id];
+    saveState();
+    renderDays();
+    return;
+  }
+  saveDraft(id);
+  const nuevo = state.draftLog[id];
+  if(!nuevo || nuevo.weight == null){
+    // Ejercicio sin peso definido: hay que cargarlo a mano.
+    delete state.draftLog[id];
+    const row = document.getElementById('row-' + id);
+    if(row && !row.classList.contains('ex-open')) toggleEx(id);
+    const inp = document.getElementById('w-' + id);
+    if(inp) inp.focus();
+    alert('Este ejercicio todavía no tiene peso definido: cargalo en el campo de peso.');
+    return;
+  }
+  saveState();
+  pintarHecho(id, true);
 }
 
 // Despliega o pliega un ejercicio. Es preferencia de pantalla: queda en
@@ -1796,8 +1834,7 @@ function saveDraft(exId){
   const prev = state.draftLog[exId] || {};
   state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null,
                            rir: prev.rir != null ? prev.rir : null };
-  const st = document.getElementById('st-' + exId);
-  if(st) st.style.display = (weight != null) ? 'inline-block' : 'none';
+  pintarHecho(exId, weight != null);
   const exr = findExercise(exId);
   const hint = document.getElementById('hint-' + exId);
   if(hint && exr){
