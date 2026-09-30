@@ -178,6 +178,17 @@
   .set-cell .set-tgt{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mustard);text-transform:none;letter-spacing:0;margin-top:2px;}
   .set-cell input{text-align:center;padding:8px 4px;}
   @media (max-width:520px){ .log-sets{grid-template-columns:1fr;} }
+  .ex-fold .ex-body{display:none;padding-top:10px;}
+  .ex-fold.ex-open .ex-body{display:block;}
+  .ex-toggle{cursor:pointer;margin-bottom:0;align-items:center;}
+  .ex-chev{display:inline-block;color:var(--ink-faint);font-size:11px;margin-right:7px;transition:transform .15s ease;}
+  .ex-open .ex-chev{transform:rotate(90deg);}
+  .ex-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+  .ex-right .pill{margin-right:0;}
+  .ex-state{display:flex;gap:6px;}
+  .ex-done{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--sage);}
+  .ex-stall{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--rust);}
+  .ex-actions{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
   .ex-skipped{opacity:.55;}
   .ex-skipped .exname{text-decoration:line-through;}
   .skip-btn{margin-left:6px;}
@@ -589,7 +600,7 @@ function defaultState(){
         ex('d2e5','Aperturas con mancuernas','','weight',12,14,1.25,22.5,12,[],'Pecho',[0,-2]),
         ex('d2e6','Elevaciones laterales en polea','','weight',12,15,1,5,15,['Elevación con mancuerna','Elevación en máquina'],'Hombro',[0,0,0]),
         ex('d2e7','Face pull','','unregistered',12,15,2.5,null,null,['Pájaros con mancuernas','Reverse pec deck'],'Hombro posterior',[0,0,0]),
-        ex('d2e8','Curl con barra recta','','weight',10,14,2.5,45,14,[],'Brazos',[0,-2]),
+        ex('d2e8','Curl con barra recta','','weight',10,14,2.5,45,14,['Curl con barra W','Curl con mancuernas','Curl martillo con mancuernas'],'Brazos',[0,-2]),
       ]},
       { id:3, title:'Día 3', pattern:'Piernas B', icon:'🦵', color:'red', exercises:[
         ex('d3e1','Peso muerto','mismo peso en las 3 series','weight',4,6,5,170,6,['Peso muerto sumo','Peso muerto déficit','Peso muerto a la trampa'],'Isquios / glúteo',[0,-1,-1]),
@@ -771,7 +782,7 @@ function wodResultsFor(id){
 function extraDefs(){
   return [
     ex('d4e1b','Dorsalera a 1 mano','','weight',12,16,2.5,55,16,['Jalón al pecho agarre neutro','Dominadas asistidas'],'Espalda',[0,-2,-2]),
-    ex('d2e8b','Curl con barra recta','','weight',10,14,2.5,45,14,[],'Brazos',[0,-2]),
+    ex('d2e8b','Curl con barra recta','','weight',10,14,2.5,45,14,['Curl con barra W','Curl con mancuernas','Curl martillo con mancuernas'],'Brazos',[0,-2]),
   ];
 }
 
@@ -1482,16 +1493,29 @@ function renderDays(){
         </div>`;
       }
       const skipBtn = isClosed ? '' : `<button class="small skip-btn" onclick="toggleSkip('${exr.id}')">No lo hice</button>`;
-      return `<div class="exrow" id="row-${exr.id}">
-        <div class="exhead">
-          <div><span class="exname">${exr.name}</span><span class="exmeta">${schemeText(exr)}${exr.scheme ? ' · ' + exr.scheme : ''}</span></div>
-          <span style="text-align:right;">
-            <span class="acc-meta" style="display:block;margin-bottom:6px;">${exSetsSummary(exr)}${modo==='series'?' · <span style="color:var(--blue);">series</span>':''}</span>
-            ${variantBtn}
-            ${skipBtn}
+      // Plegado: se ve nombre, objetivo y estado; al desplegar, todo lo demás.
+      const abierto = (state.uiPrefs.openEx || []).includes(exr.id);
+      const cargado = draft && !draft.auto && draft.weight != null;
+      const estancado = (exr.stallWeeks || 0) >= STALL_LIMIT && !isClosed;
+      return `<div class="exrow ex-fold ${abierto ? 'ex-open' : ''}" id="row-${exr.id}">
+        <div class="exhead ex-toggle" onclick="toggleEx('${exr.id}')">
+          <div>
+            <span class="exname"><span class="ex-chev">▸</span>${exr.name}</span>
+            <span class="exmeta">${schemeText(exr)}${exr.scheme ? ' · ' + exr.scheme : ''}</span>
+          </div>
+          <span class="ex-right">
+            ${targetText(exr)}
+            <span class="ex-state">
+              <span class="ex-done" id="st-${exr.id}" style="display:${cargado ? 'inline-block' : 'none'};">✓ cargado</span>
+              ${estancado ? '<span class="ex-stall">estancado</span>' : ''}
+            </span>
           </span>
         </div>
-        <div style="margin-bottom:10px;">${targetText(exr)}</div>
+        <div class="ex-body">
+        <div class="ex-actions">
+          <span class="acc-meta">${exSetsSummary(exr)}${modo==='series'?' · <span style="color:var(--blue);">series</span>':''}</span>
+          <span>${variantBtn} ${skipBtn}</span>
+        </div>
         ${stallHtml(exr, isClosed)}
         ${rampFor(exr, wVal)}
         ${cfg}
@@ -1500,6 +1524,7 @@ function renderDays(){
           Más peso que el objetivo: al cerrar la semana pasa a ser tu nueva base, con las reps que hagas. No cuenta como falla.
         </div>
         ${rirHtml(exr, draft, isClosed)}
+        </div>
       </div>`;
     }).join('');
 
@@ -1594,6 +1619,18 @@ function renderDays(){
     const card = mount.querySelector(`[data-acc="${key}"]`);
     if(card) card.classList.add('open');
   });
+}
+
+// Despliega o pliega un ejercicio. Es preferencia de pantalla: queda en
+// este dispositivo y no viaja a la nube.
+function toggleEx(id){
+  const row = document.getElementById('row-' + id);
+  if(!row) return;
+  row.classList.toggle('ex-open');
+  const set = new Set(state.uiPrefs.openEx || []);
+  if(row.classList.contains('ex-open')) set.add(id); else set.delete(id);
+  state.uiPrefs.openEx = Array.from(set);
+  saveLocalOnly();
 }
 
 // Marca un ejercicio puntual como no hecho dentro de un día entrenado.
@@ -1759,6 +1796,8 @@ function saveDraft(exId){
   const prev = state.draftLog[exId] || {};
   state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null,
                            rir: prev.rir != null ? prev.rir : null };
+  const st = document.getElementById('st-' + exId);
+  if(st) st.style.display = (weight != null) ? 'inline-block' : 'none';
   const exr = findExercise(exId);
   const hint = document.getElementById('hint-' + exId);
   if(hint && exr){
