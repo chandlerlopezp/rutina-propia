@@ -178,6 +178,11 @@
   .set-cell .set-tgt{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mustard);text-transform:none;letter-spacing:0;margin-top:2px;}
   .set-cell input{text-align:center;padding:8px 4px;}
   @media (max-width:520px){ .log-sets{grid-template-columns:1fr;} }
+  .day-move{display:inline-flex;gap:2px;margin:0 2px;}
+  .mv{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid var(--line-strong);border-radius:6px;font-size:10px;color:var(--ink-dim);cursor:pointer;}
+  .mv:hover{border-color:var(--mustard);color:var(--mustard);}
+  .mv.off{opacity:.25;cursor:default;}
+  .mv.off:hover{border-color:var(--line-strong);color:var(--ink-dim);}
   .ex-fold .ex-body{display:none;padding-top:10px;}
   .ex-fold.ex-open .ex-body{display:block;}
   .ex-toggle{cursor:pointer;margin-bottom:0;align-items:center;}
@@ -576,6 +581,7 @@ function defaultState(){
     structure: 'cuatro',      // 'cuatro' | 'tres'
     rotation: 'A',            // en la estructura de 3 días, accesorios de la semana A o B
     focusMemo: {},            // último preset elegido en cada estructura
+    dayOrder: {},             // orden de los días elegido en cada estructura
     reserve: (() => { const r = {}; extraDefs().forEach(e => { r[e.id] = e; }); return r; })(),
     finisherStatus: { day2:{done:false, note:''}, day4:{done:false, note:''} },
     wodLibrary: DEFAULT_WOD_LIBRARY.map(w => Object.assign({}, w)),
@@ -844,6 +850,47 @@ function buildDays(structure, pool, defs){
 
 // Ejercicios de la semana: en la estructura de 3 días, los fijos más los
 // accesorios de la rotación que toca (A o B).
+// Orden en que hacés los días. El contenido de cada día conserva su
+// identidad interna (lo usan el cierre, las rotaciones y el historial);
+// "Día 1, 2, 3" pasa a ser solo la posición. Cada estructura tiene su orden.
+function dayOrderFor(st, est){
+  est = est || st.structure || 'cuatro';
+  const ids = (est === (st.structure || 'cuatro'))
+    ? st.days.map(d => d.id)
+    : layoutFor(est).map(L => L.id);
+  const guardado = (st.dayOrder && st.dayOrder[est]) || [];
+  const orden = guardado.filter(id => ids.includes(id));
+  ids.forEach(id => { if(!orden.includes(id)) orden.push(id); });
+  return orden;
+}
+function orderedDays(){
+  return dayOrderFor(state).map(id => state.days.find(d => d.id === id)).filter(Boolean);
+}
+function dayPos(id, est){
+  return dayOrderFor(state, est).indexOf(id) + 1;
+}
+function ordenarLayout(L, est){
+  const o = dayOrderFor(state, est);
+  return L.slice().sort((a, b) => o.indexOf(a.id) - o.indexOf(b.id));
+}
+function moveDay(id, delta){
+  const est = state.structure || 'cuatro';
+  const o = dayOrderFor(state);
+  const i = o.indexOf(id), j = i + delta;
+  if(i < 0 || j < 0 || j >= o.length) return;
+  [o[i], o[j]] = [o[j], o[i]];
+  state.dayOrder = Object.assign({}, state.dayOrder || {});
+  state.dayOrder[est] = o;
+  saveState();
+  renderDays();
+  renderDeloadBanner();
+}
+// Nombre de un día por su contenido, para el historial.
+function nombreDia(est, id){
+  const L = layoutFor(est || 'cuatro').find(x => x.id === id);
+  return L ? L.pattern : ('Día ' + id);
+}
+
 function activeExercises(day){
   const r = (state && state.rotation) || 'A';
   return day.exercises.filter(e => !e.rot || e.rot === r);
@@ -1423,7 +1470,7 @@ function renderDays(){
     </div>
   </div>`;
 
-  const dayCards = state.days.map(day => {
+  const dayCards = orderedDays().map(day => {
     const isClosed = !!state.dayClosed[day.id];
     const rows = activeExercises(day).map(exr => {
       const variantBtn = (exr.variants.length && !isClosed)
@@ -1551,10 +1598,10 @@ function renderDays(){
       <button class="acc-header" onclick="toggleAcc(this)">
         <span class="acc-icon">${day.icon}</span>
         <div class="acc-titles">
-          <div class="acc-title">${day.title}</div>
+          <div class="acc-title">Día ${dayPos(day.id)}</div>
           <div class="acc-sub">${day.pattern}${state.structure === 'tres' ? ' · accesorios ' + (state.rotation || 'A') : ''}</div>
         </div>
-        <span class="acc-meta">${statusBadge} <span class="chevron">▾</span></span>
+        <span class="acc-meta">${statusBadge} ${moverHtml(day.id)} <span class="chevron">▾</span></span>
       </button>
       <div class="acc-body">
         <p class="chart-note" style="margin-bottom:14px;">Cargá siempre el <b style="color:var(--ink-dim);">top set</b>: el peso y las reps de la serie más pesada (la primera). Las series siguientes van al mismo peso con menos reps, salvo que el esquema diga backoff.</p>
@@ -1657,6 +1704,13 @@ function toggleDone(id){
   }
   saveState();
   pintarHecho(id, true);
+}
+
+function moverHtml(id){
+  const pos = dayPos(id), total = state.days.length;
+  const up = pos > 1 ? `<span class="mv" title="Subir" onclick="event.stopPropagation(); moveDay(${id},-1)">▲</span>` : '<span class="mv off">▲</span>';
+  const dn = pos < total ? `<span class="mv" title="Bajar" onclick="event.stopPropagation(); moveDay(${id},1)">▼</span>` : '<span class="mv off">▼</span>';
+  return `<span class="day-move">${up}${dn}</span>`;
 }
 
 // Despliega o pliega un ejercicio. Es preferencia de pantalla: queda en
@@ -2296,7 +2350,7 @@ function lastProgState(exr){
 function progRowHtml(i){
   return `<label class="prog-item ${i.on ? 'on' : ''} ${i.cerrado ? 'closed' : ''}">
     <input type="checkbox" ${i.on ? 'checked' : ''} ${i.cerrado ? 'disabled' : ''} onchange="toggleProgression('${i.e.id}')">
-    <span class="prog-name">${esc(i.e.name)}<small>Día ${i.d.id}${i.cerrado ? ' · cerrado' : ''}${i.ult ? ` · <span class="${i.ult.ok ? 'ult-ok' : 'ult-pausa'}">S${i.ult.week}: ${i.ult.txt}</span>` : ''}</small></span>
+    <span class="prog-name">${esc(i.e.name)}<small>Día ${dayPos(i.d.id)}${i.cerrado ? ' · cerrado' : ''}${i.ult ? ` · <span class="${i.ult.ok ? 'ult-ok' : 'ult-pausa'}">S${i.ult.week}: ${i.ult.txt}</span>` : ''}</small></span>
     <span class="prog-delta">${fmtTarget(i.desde, i.e)} → <b>${fmtTarget(i.hacia, i.e)}</b></span>
   </label>`;
 }
@@ -2354,7 +2408,7 @@ function progPanelHtml(f){
   const filas = enGrupo.length
     ? enGrupo.map(i => `<label class="prog-item ${i.on ? 'on' : ''} ${i.cerrado ? 'closed' : ''}">
         <input type="checkbox" ${i.on ? 'checked' : ''} ${i.cerrado ? 'disabled' : ''} onchange="toggleProgression('${i.e.id}')">
-        <span class="prog-name">${esc(i.e.name)}<small>Día ${i.d.id}${i.cerrado ? ' · cerrado' : ''}${i.ult ? ` · <span class="${i.ult.ok ? 'ult-ok' : 'ult-pausa'}">S${i.ult.week}: ${i.ult.txt}</span>` : ''}</small></span>
+        <span class="prog-name">${esc(i.e.name)}<small>Día ${dayPos(i.d.id)}${i.cerrado ? ' · cerrado' : ''}${i.ult ? ` · <span class="${i.ult.ok ? 'ult-ok' : 'ult-pausa'}">S${i.ult.week}: ${i.ult.txt}</span>` : ''}</small></span>
         <span class="prog-delta">${fmtTarget(i.desde, i.e)} → <b>${fmtTarget(i.hacia, i.e)}</b></span>
       </label>`).join('')
     : `<p class="prog-empty">Ningún ejercicio de tren ${grupo} tiene progresión disponible esta semana: aparecen acá los que cumplieron su objetivo al cerrar la anterior.</p>`;
@@ -2363,8 +2417,8 @@ function progPanelHtml(f){
   return `<details class="wt-foco" ${state.uiPrefs.progPanelOpen ? 'open' : ''} ontoggle="state.uiPrefs.progPanelOpen = this.open; saveLocalOnly();">
     <summary><span class="wt-lbl">Qué progresa esta semana</span><span class="prog-count">tren ${grupo} · ${activos} de ${enGrupo.length}</span></summary>
     <div class="prog-groups">
-      ${btn('inferior','Tren inferior','días 1 y 3')}
-      ${btn('superior','Tren superior','días 2 y 4')}
+      ${btn('inferior','Tren inferior','días ' + FOCUS_DAYS.inferior.map(x => dayPos(x)).sort().join(' y '))}
+      ${btn('superior','Tren superior','días ' + FOCUS_DAYS.superior.map(x => dayPos(x)).sort().join(' y '))}
     </div>
     <div class="prog-list">${filas}</div>
     ${sinCambios.length ? `<p class="prog-empty">Sin progresión disponible: ${sinCambios.join(', ')}.</p>` : ''}
@@ -2498,7 +2552,7 @@ function renderEstructura(){
   };
   const suma = slots => slots.reduce((a, s) => a + (pool[s.id] ? series(pool[s.id], s) : 0), 0);
 
-  const dias = layoutTres().map(L => {
+  const dias = ordenarLayout(layoutTres(), 'tres').map(L => {
     const fijos = L.slots.filter(s => !s.rot);
     const colA = L.slots.filter(s => s.rot === 'A');
     const colB = L.slots.filter(s => s.rot === 'B');
@@ -2508,7 +2562,7 @@ function renderEstructura(){
         <div class="es-total">Sesión completa: ${suma(fijos) + suma(slots)} series</div>
       </div>`;
     return `<div class="es-day acc-${L.color}">
-      <div class="es-day-head"><span class="acc-icon">${L.icon}</span><div><b>${L.title}</b><span>${L.pattern}</span></div></div>
+      <div class="es-day-head"><span class="acc-icon">${L.icon}</span><div><b>Día ${dayPos(L.id, 'tres')}</b><span>${L.pattern}</span></div></div>
       <div class="es-fixed"><div class="es-tag">Todas las semanas</div><ul>${fijos.map(linea).join('')}</ul></div>
       <div class="es-cols">${col('A', colA)}${col('B', colB)}</div>
     </div>`;
@@ -2525,8 +2579,8 @@ function renderEstructura(){
        <button class="small primary" style="margin-bottom:16px;" onclick="switchStructure('tres'); renderEstructura();">Usar la estructura de 3 días</button>`;
 
   // Estructura de 4 días, como referencia
-  const cuatro = layoutFor('cuatro').map(L => `<div class="es-mini">
-      <b>${L.title}</b> · ${L.pattern}
+  const cuatro = ordenarLayout(layoutFor('cuatro'), 'cuatro').map(L => `<div class="es-mini">
+      <b>Día ${dayPos(L.id, 'cuatro')}</b> · ${L.pattern}
       <span>${L.slots.map(s => pool[s.id] ? esc(pool[s.id].name) : '').filter(Boolean).join(' · ')}</span>
     </div>`).join('');
 
@@ -3025,7 +3079,7 @@ function renderHistory(){
     const noHechosLabel = noHechos.length ? `<p class="histfin">No hechos: ${noHechos.join(', ')}</p>` : '';
     const daysDone = week.daysDone;
     const daysLabel = daysDone
-      ? `<p class="histfin">Días entrenados: ${daysDone.length ? daysDone.map(n => 'Día '+n).join(', ') : 'ninguno'}${daysDone.length < (week.structure === 'tres' ? 3 : 4) ? ' · faltaron ' + ((week.structure === 'tres' ? 3 : 4) - daysDone.length) : ''}</p>`
+      ? `<p class="histfin">Días entrenados: ${daysDone.length ? daysDone.map(n => nombreDia(week.structure, n)).join(', ') : 'ninguno'}${daysDone.length < (week.structure === 'tres' ? 3 : 4) ? ' · faltaron ' + ((week.structure === 'tres' ? 3 : 4) - daysDone.length) : ''}</p>`
       : '';
     return `<details class="histrow">
       <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?`<span class="badge-deload">Descarga −${week.deloadPct || 15}%</span>`:(week.adaptation?'<span class="badge-adapt">Adaptación</span>':'')}</summary>
