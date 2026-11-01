@@ -191,6 +191,8 @@
   .ex-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
   .ex-right .pill{margin-right:0;}
   .ex-state{display:flex;gap:6px;}
+  .ex-did{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-dim);}
+  .ex-did:empty{display:none;}
   .done-btn{padding:4px 10px;font-size:11px;}
   .done-btn.is-done, .done-btn.is-done:hover{background:var(--sage);border-color:var(--sage);color:var(--bg);font-weight:600;}
   .done-btn.is-done:disabled{opacity:.85;}
@@ -582,6 +584,7 @@ function defaultState(){
     rotation: 'A',            // en la estructura de 3 días, accesorios de la semana A o B
     focusMemo: {},            // último preset elegido en cada estructura
     dayOrder: {},             // orden de los días elegido en cada estructura
+    layoutTresVer: layoutTresVersion(),   // un estado nuevo ya nace con el armado actual
     reserve: (() => { const r = {}; extraDefs().forEach(e => { r[e.id] = e; }); return r; })(),
     finisherStatus: { day2:{done:false, note:''}, day4:{done:false, note:''} },
     wodLibrary: DEFAULT_WOD_LIBRARY.map(w => Object.assign({}, w)),
@@ -933,6 +936,7 @@ function mergeExercise(freshEx, savedEx){
     progressMode: savedEx.progressMode || freshEx.progressMode || 'peso',
     setsBy: savedEx.setsBy || null,
     seeded: savedEx.seeded || false,
+    variantMem: savedEx.variantMem || {},
   };
 }
 
@@ -1002,6 +1006,7 @@ function reconcileState(saved){
   }
   if(!merged.progressFocus) merged.progressFocus = 'inferior';
   allExercises(merged).forEach(e => ensureSetReps(e));
+  allExercises(merged).forEach(e => normalizarSeries(e));
   // Semanas cerradas antes de esta versión: se reconstruye lastWeek desde el
   // último cierre del historial, que guarda los objetivos que se entrenaron.
   const ultima = (merged.history && merged.history.length) ? merged.history[merged.history.length-1] : null;
@@ -1273,21 +1278,59 @@ function targetText(exr){
 // Suma una serie replicando el último escalón del patrón. El patrón guarda
 // offsets de reps respecto del top set, así que copiar el último mantiene la
 // forma de la progresión dentro del ejercicio.
+// Ajusta una lista al largo n: la recorta, o la completa con lo que devuelva
+// relleno(i). Es la herramienta común para que ninguna lista de series quede
+// con otro largo que el resto.
+function ajustarLargo(arr, n, relleno){
+  const out = (Array.isArray(arr) ? arr : []).slice(0, n);
+  while(out.length < n) out.push(relleno(out.length));
+  return out;
+}
+
+// La cantidad de series tiene UN dueño: seriesDe(). Esto alinea todo lo demás
+// (patrón, pesos por serie, y los objetivos guardados de la semana anterior y
+// de la progresión en pausa) para que ninguna lista quede con otro largo.
+function normalizarSeries(exr){
+  if(!exr || exr.type === 'time') return;
+  const n = seriesDe(exr);
+  const ult = (a, d) => (Array.isArray(a) && a.length) ? a[a.length - 1] : d;
+  exr.setPattern = ajustarLargo(exr.setPattern, n, () => ult(exr.setPattern, 0));
+  if(Array.isArray(exr.wFactors)) exr.wFactors = ajustarLargo(exr.wFactors, n, () => ult(exr.wFactors, 1));
+  ['stash', 'lastWeek'].forEach(k => {
+    const t = exr[k];
+    if(t && Array.isArray(t.setReps) && t.setReps.length !== n){
+      t.setReps = ajustarLargo(t.setReps, n, i => (exr.setReps && exr.setReps[i] != null) ? exr.setReps[i] : (exr.repFloor || 1));
+      t.currentRepTarget = Math.max.apply(null, t.setReps);
+    }
+  });
+}
+
+// El borrador de lo que cargaste acompaña a la cantidad de series: si sumás
+// una, aparece una casilla vacía; si quitás una, se descarta la última.
+function ajustarBorrador(exr){
+  const d = state.draftLog[exr.id];
+  if(!d || !Array.isArray(d.setReps)) return;
+  d.setReps = ajustarLargo(d.setReps, seriesDe(exr), () => null);
+  const hechas = d.setReps.filter(x => x != null);
+  d.reps = hechas.length ? Math.max.apply(null, hechas) : null;
+}
+
+// Suma una serie. La nueva arranca como máximo en lo que hizo la anterior:
+// una serie nueva no puede pedir más que la que acabás de terminar.
 function addSetTo(exr){
   const p = (exr.setPattern || [0]).slice();
   if(p.length >= MAX_SETS) return false;
+  const nueva = arr => Math.min(arr[arr.length - 1], exr.repFloor || arr[arr.length - 1]);
   p.push(p[p.length-1]);
   exr.setPattern = p;
   if(Array.isArray(exr.setReps) && exr.setReps.length){
-    const r = exr.setReps.slice();
-    // La serie nueva entra en el piso del rango: es la que más margen tiene.
-    r.push(exr.repFloor || r[r.length-1]);
-    exr.setReps = r;
+    exr.setReps = exr.setReps.concat([nueva(exr.setReps)]);
+    exr.currentRepTarget = Math.max.apply(null, exr.setReps);
   }
   ['stash','lastWeek'].forEach(k => {
     const t = exr[k];
     if(t && Array.isArray(t.setReps) && t.setReps.length){
-      t.setReps = t.setReps.concat([exr.repFloor || t.setReps[t.setReps.length-1]]);
+      t.setReps = t.setReps.concat([nueva(t.setReps)]);
       t.currentRepTarget = Math.max.apply(null, t.setReps);
     }
   });
@@ -1296,6 +1339,7 @@ function addSetTo(exr){
     w.push(w[w.length-1]);
     exr.wFactors = w;
   }
+  ajustarBorrador(exr);
   return true;
 }
 
@@ -1305,10 +1349,8 @@ function removeSetFrom(exr){
   p.pop();
   exr.setPattern = p;
   if(Array.isArray(exr.setReps) && exr.setReps.length > 1){
-    const r = exr.setReps.slice();
-    r.pop();
-    exr.setReps = r;
-    exr.currentRepTarget = Math.max.apply(null, r);
+    exr.setReps = exr.setReps.slice(0, -1);
+    exr.currentRepTarget = Math.max.apply(null, exr.setReps);
   }
   ['stash','lastWeek'].forEach(k => {
     const t = exr[k];
@@ -1322,6 +1364,7 @@ function removeSetFrom(exr){
     w.pop();
     exr.wFactors = w;
   }
+  ajustarBorrador(exr);
   return true;
 }
 
@@ -1554,6 +1597,7 @@ function renderDays(){
           </div>
           <span class="ex-right">
             ${targetText(exr)}
+            <span class="ex-did" id="did-${exr.id}">${hicisteTxt(draft, exr)}</span>
             <span class="ex-state">
               ${estancado ? '<span class="ex-stall">estancado</span>' : ''}
               <button class="small done-btn ${cargado ? 'is-done' : ''}" id="done-${exr.id}" ${isClosed ? 'disabled' : ''}
@@ -1669,6 +1713,13 @@ function renderDays(){
     const card = mount.querySelector(`[data-acc="${key}"]`);
     if(card) card.classList.add('open');
   });
+}
+
+// Texto "hiciste 10/8/6" para mostrar al lado del objetivo, que es otra cosa.
+function hicisteTxt(draft, exr){
+  if(!draft || draft.auto || exr.type === 'time' || !Array.isArray(draft.setReps)) return '';
+  if(!draft.setReps.some(x => x != null)) return '';
+  return 'hiciste ' + draft.setReps.map(x => x == null ? '–' : x).join('/');
 }
 
 function pintarHecho(id, hecho){
@@ -1889,6 +1940,8 @@ function saveDraft(exId){
   state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null,
                            rir: prev.rir != null ? prev.rir : null };
   pintarHecho(exId, weight != null);
+  const did = document.getElementById('did-' + exId);
+  if(did) did.textContent = hicisteTxt(state.draftLog[exId], findExercise(exId));
   const exr = findExercise(exId);
   const hint = document.getElementById('hint-' + exId);
   if(hint && exr){
@@ -1937,30 +1990,94 @@ function findExercise(id){
   return null;
 }
 
+// Lo que se recuerda de cada variante de un ejercicio: su peso, sus series,
+// sus reps y su estado de progresión. Cada variante es un ejercicio distinto
+// (la zancada no se carga como la búlgara), así que no comparten nada.
+const VARIANT_KEYS = ['type','currentWeight','currentRepTarget','setReps','setPattern','wFactors',
+                      'repStep','progressMode','stallWeeks','lastWeek','stash','progPref'];
+
+function snapVariant(exr){
+  const s = {};
+  VARIANT_KEYS.forEach(k => {
+    if(exr[k] === undefined) return;
+    s[k] = (exr[k] !== null && typeof exr[k] === 'object') ? JSON.parse(JSON.stringify(exr[k])) : exr[k];
+  });
+  return s;
+}
+
+function restoreVariant(exr, s){
+  VARIANT_KEYS.forEach(k => {
+    if(k in s) exr[k] = (s[k] !== null && typeof s[k] === 'object') ? JSON.parse(JSON.stringify(s[k])) : s[k];
+    else delete exr[k];
+  });
+}
+
 function rotateVariant(id){
   const exr = findExercise(id);
   if(!exr) return;
-  const allNames = [exr.baseName, ...exr.variants];
-  const currentPos = allNames.indexOf(exr.name);
-  const nextPos = (currentPos + 1) % allNames.length;
-  const newName = allNames[nextPos];
-  const label = exr.type === 'time' ? 'segundos' : 'kg';
-  const input = prompt(`Vas a pasar "${exr.name}" a "${newName}".\n\nComo no hay historial de este ejercicio, ingresá el peso/tiempo inicial (${label}):`, '');
-  if(input === null) return;
-  const parsed = parseFloat(input.replace(',', '.'));
-  exr.name = newName;
-  exr.currentWeight = isNaN(parsed) ? null : parsed;
-  exr.currentRepTarget = exr.type === 'time' ? null : exr.repFloor;
-  // Ejercicio nuevo: todas las series arrancan en el piso y sin historial
-  // de estancamiento (antes quedaban las series del ejercicio anterior).
-  if(exr.type !== 'time'){
-    const nS = (exr.setReps && exr.setReps.length) ? exr.setReps.length : (exr.setPattern || [0]).length;
-    exr.setReps = new Array(nS).fill(exr.repFloor);
+  exr.variantMem = exr.variantMem || {};
+  const nombres = [exr.baseName, ...exr.variants];
+  const unidad = exr.type === 'time' ? ' seg' : 'kg';
+
+  const lineas = nombres.map((nm, i) => {
+    let info;
+    if(nm === exr.name) info = 'actual';
+    else {
+      const m = exr.variantMem[nm];
+      info = (m && m.currentWeight != null)
+        ? `${m.currentWeight}${unidad}${(m.setReps && m.setReps.length) ? ' · ' + m.setReps.length + ' series' : ''}`
+        : 'sin registrar';
+    }
+    return `${i + 1}. ${nm} — ${info}`;
+  });
+  const resp = prompt(`¿A qué ejercicio cambiás?\\n\\n${lineas.join('\\n')}\\n\\nEscribí el número:`, '');
+  if(resp === null) return;
+  const idx = parseInt(resp, 10) - 1;
+  if(isNaN(idx) || idx < 0 || idx >= nombres.length){ alert('Número inválido: no se cambió nada.'); return; }
+  const nuevo = nombres[idx];
+  if(nuevo === exr.name) return;
+
+  // Guardar el ejercicio que se deja, tal como está.
+  exr.variantMem[exr.name] = snapVariant(exr);
+  const nS = seriesDe(exr);
+  const memoria = exr.variantMem[nuevo];
+
+  exr.name = nuevo;
+  if(memoria){
+    // Ya lo habías usado: vuelve con su peso, sus series y su progresión.
+    restoreVariant(exr, memoria);
+  } else {
+    // Primera vez: arranca con la misma cantidad de series, y se pide el peso.
+    const entrada = prompt(`Primera vez con "${nuevo}". Peso inicial (${unidad.trim()}) — dejalo vacío para cargarlo después:`, '');
+    const parsed = (entrada === null) ? NaN : parseFloat(String(entrada).replace(',', '.'));
+    exr.stallWeeks = 0;
+    exr.lastWeek = null;
+    exr.stash = null;
+    delete exr.progPref;
+    if(exr.type === 'time'){
+      if(!isNaN(parsed)) exr.currentWeight = parsed;
+    } else if(!isNaN(parsed)){
+      exr.type = 'weight';
+      exr.currentWeight = parsed;
+      exr.setReps = new Array(nS).fill(exr.repFloor);
+      exr.currentRepTarget = exr.repFloor;
+    } else {
+      // Sin peso todavía: queda "sin registrar" y se carga al entrenarlo.
+      exr.type = 'unregistered';
+      exr.currentWeight = null;
+      exr.setReps = null;
+      exr.currentRepTarget = null;
+    }
   }
-  exr.stallWeeks = 0;
-  exr.lastWeek = null;   // es otro ejercicio: no hay semana anterior a la que volver
-  exr.stash = null;
-  exr.type = (exr.type === 'unregistered') ? 'unregistered' : exr.type;
+  // Las series de esta variante se alinean con el patrón (por si difieren).
+  if(exr.type !== 'time'){
+    let g = 0;
+    const objetivo = (exr.setReps && exr.setReps.length) ? exr.setReps.length : (exr.setPattern || [0]).length;
+    const p = (exr.setPattern || [0]).slice();
+    while(p.length < objetivo && g++ < 10) p.push(p[p.length - 1]);
+    while(p.length > objetivo && p.length > 1) p.pop();
+    exr.setPattern = p;
+  }
   delete state.draftLog[id];
   saveState(true);
   renderDays();
@@ -2110,9 +2227,12 @@ function closeWeek(){
                           : (exr.currentRepTarget != null ? exr.currentRepTarget : null));
       // Lo que hiciste en cada serie. Si no tocaste el ejercicio se asume el
       // objetivo exacto (cerrar el día ya te avisó de eso).
-      const hechasPorSerie = exr.type === 'time' ? null
+      let hechasPorSerie = exr.type === 'time' ? null
                           : ((draft.setReps && draft.setReps.some(x => x != null)) ? draft.setReps
                           : (exr.setReps ? exr.setReps.slice() : null));
+      // Siempre una entrada por serie, aunque la cantidad haya cambiado después
+      // de cargar: la que falta cuenta como no hecha en vez de borrar otra.
+      if(hechasPorSerie) hechasPorSerie = ajustarLargo(hechasPorSerie, seriesDe(exr), () => null);
       entries[exr.id] = { name: exr.name, weight: loggedWeight, reps: loggedReps, type: exr.type,
                           muscle: exr.muscle, setPattern: exr.setPattern,
                           // Se guardan las reps HECHAS, no el objetivo: así el
@@ -2207,6 +2327,7 @@ function closeWeek(){
   state.days.forEach(d => d.exercises.forEach(exr => {
     // Los accesorios que no tocaban esta semana conservan su "semana anterior",
     // que es la última vez que se entrenaron.
+    normalizarSeries(exr);
     if(!(exr.id in antes)) return;
     if(exr.stash){
       // En pausa: si repetiste y cumpliste (o no lo entrenaste), la
@@ -2616,8 +2737,14 @@ function applyTargets(exr, t){
   if(!t) return;
   exr.currentWeight = t.weight;
   if(exr.type !== 'time' && Array.isArray(t.setReps) && t.setReps.length){
-    exr.setReps = t.setReps.slice();
+    // Volver a los objetivos de otra semana (adaptación, pausa) NO puede cambiar
+    // cuántas series tenés ahora: si sumaste una, sigue; si la quitaste, sigue
+    // quitada. Las series que ese objetivo no conocía conservan el actual.
+    const n = seriesDe(exr);
+    const actual = Array.isArray(exr.setReps) ? exr.setReps : [];
+    exr.setReps = ajustarLargo(t.setReps, n, i => actual[i] != null ? actual[i] : (exr.repFloor || 1));
     exr.currentRepTarget = Math.max.apply(null, exr.setReps);
+    normalizarSeries(exr);
   } else {
     exr.currentRepTarget = t.currentRepTarget;
   }
