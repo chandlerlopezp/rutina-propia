@@ -205,6 +205,9 @@
   .rir-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
   .rir-lbl{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
   .rir-opts{display:flex;gap:4px;}
+  .rir-prev{font-size:12px;color:var(--ink-dim);border:1px dashed var(--line-strong);border-radius:6px;padding:3px 9px;}
+  .rir-prev b{font-family:'IBM Plex Mono',monospace;color:var(--mustard);font-size:13px;}
+  .rir-prev small{color:var(--ink-faint);font-size:11px;}
   .rir-btn{min-width:34px;padding:4px 8px;font-family:'IBM Plex Mono',monospace;}
   .rir-btn.wt-on{background:var(--mustard);color:var(--bg);border-color:var(--mustard);}
   .rir-btn.wt-on:hover{background:var(--mustard);color:var(--bg);}
@@ -1795,6 +1798,19 @@ function toggleSkip(exId){
 }
 
 // Selector de RIR: cuántas reps te quedaban en el tanque en la serie más dura.
+// Último RIR que marcaste en este mismo ejercicio (misma variante), para
+// tener a mano cómo te sentiste la vez anterior.
+function ultimoRir(exr){
+  const hist = state.history || [];
+  for(let i = hist.length - 1; i >= 0; i--){
+    const e = hist[i].entries && hist[i].entries[exr.id];
+    if(!e || e.skipped || e.rir == null) continue;
+    if(e.name && e.name !== exr.name) continue;   // otra variante: otra sensación
+    return { rir: e.rir, week: hist[i].weekNumber, weight: e.weight };
+  }
+  return null;
+}
+
 function rirHtml(exr, draft, isClosed){
   if(exr.type === 'time') return '';
   const sel = (draft && draft.rir != null) ? draft.rir : null;
@@ -1806,9 +1822,13 @@ function rirHtml(exr, draft, isClosed){
     : sel === 1 ? 'muy exigente, progresión normal'
     : sel <= 3 ? 'con margen: si fallaste reps, no cuenta como estancamiento'
     : 'sobrado: el peso podría estar liviano';
+  const u = ultimoRir(exr);
+  const previo = u ? `<span class="rir-prev" title="Lo que marcaste la última vez que hiciste este ejercicio">
+      anterior: <b>${u.rir === 4 ? '4+' : u.rir}</b> <small>S${u.week}${u.weight != null ? ' · ' + u.weight + (exr.type === 'time' ? 'seg' : 'kg') : ''}</small></span>` : '';
   return `<div class="rir-row">
     <span class="rir-lbl">RIR serie más dura</span>
     <span class="rir-opts">${btns}</span>
+    ${previo}
     <span class="rir-note">${lectura}</span>
   </div>`;
 }
@@ -2181,13 +2201,26 @@ function closeWeek(){
   // esperando para la semana siguiente.
   const openDays = state.days.filter(d => !state.dayClosed[d.id]);
   if(openDays.length > 0){
-    const ok = confirm(
-      `Estos días quedaron sin cerrar:\n\n` +
-      openDays.map(d => '· ' + d.title + ' (' + d.pattern + ')').join('\n') +
-      '\n\nSe van a registrar como NO entrenados: no progresan y no suman volumen.\n\n' +
-      'Aceptar = cerrar la semana igual · Cancelar = volver'
-    );
-    if(!ok) return;
+    // Un día sin cerrar pero con valores cargados casi seguro lo entrenaste y
+    // te faltó cerrarlo: se avisa aparte, porque esos valores se descartan.
+    const cargados = d => activeExercises(d).filter(e => {
+      const dr = state.draftLog[e.id];
+      return dr && !dr.auto && !dr.skipped && dr.weight != null;
+    });
+    const conCarga = openDays.filter(d => cargados(d).length > 0);
+    const sinCarga = openDays.filter(d => cargados(d).length === 0);
+    let msg = '';
+    if(conCarga.length){
+      msg += 'ATENCIÓN: estos días tienen valores cargados pero no los cerraste:\n\n' +
+        conCarga.map(d => `· Día ${dayPos(d.id)} (${d.pattern}): ${cargados(d).length} ejercicio(s) con datos`).join('\n') +
+        '\n\nSi cerrás la semana así, ESOS DATOS SE DESCARTAN. Cancelá y cerrá esos días primero.\n\n';
+    }
+    if(sinCarga.length){
+      msg += 'Sin nada cargado (se registran como NO entrenados):\n' +
+        sinCarga.map(d => `· Día ${dayPos(d.id)} (${d.pattern})`).join('\n') + '\n\n';
+    }
+    msg += 'Aceptar = cerrar la semana igual · Cancelar = volver';
+    if(!confirm(msg)) return;
   }
 
   // Foto del estado antes de cerrar, para poder deshacer. Se guarda solo en
@@ -2282,28 +2315,29 @@ function closeWeek(){
         });
         exr.currentRepTarget = Math.max.apply(null, exr.setReps);
         exr.stash = null;   // la progresión que estaba en pausa ya no aplica
+      } else if(exr.type === 'unregistered' && loggedWeight != null){
+        // Primera vez que se carga el ejercicio: queda registrado SIEMPRE, sea
+        // semana de progresión, adaptación o descarga. Antes, en las dos
+        // últimas el peso quedaba en el historial pero el ejercicio seguía
+        // "sin registrar" y volvía a pedirlo. Las series arrancan en lo que
+        // hiciste; solo en una semana normal se calcula además el primer paso.
+        const base = loggedReps != null ? loggedReps : exr.repFloor;
+        exr.type = 'weight';
+        exr.currentWeight = loggedWeight;
+        exr.setReps = (hechasPorSerie && hechasPorSerie.some(x => x != null))
+          ? hechasPorSerie.map(x => Math.max(1, Math.min(x != null ? x : exr.repFloor, exr.repCeiling)))
+          : (exr.setPattern || [0]).map(o => Math.max(1, Math.min(base + o, exr.repCeiling)));
+        exr.currentRepTarget = Math.max.apply(null, exr.setReps);
+        if(!state.pendingDeload && !state.pendingAdaptation){
+          const next = computeNextStep(exr, loggedWeight, exr.currentRepTarget, exr.setReps.slice());
+          exr.currentWeight = next.weight;
+          if(next.setReps) exr.setReps = next.setReps;
+          exr.currentRepTarget = Math.max.apply(null, exr.setReps);
+        }
       } else if(state.pendingDeload || state.pendingAdaptation){
         // Objetivos sin cambios. En descarga porque la carga fue menor a
         // propósito; en adaptación porque el punto es repetir el mismo
         // estímulo y darle al cuerpo la ventana para consolidarlo.
-      } else if(exr.type === 'unregistered'){
-        if(loggedWeight != null){
-          // Primera vez: las series arrancan en lo que hiciste y desde ahí
-          // progresa como cualquier otro ejercicio, de a una serie.
-          const base = loggedReps != null ? loggedReps : exr.repFloor;
-          exr.type = 'weight';
-          exr.currentWeight = loggedWeight;
-          exr.setReps = (hechasPorSerie && hechasPorSerie.some(x => x != null))
-            ? hechasPorSerie.map(x => Math.max(1, Math.min(x != null ? x : exr.repFloor, exr.repCeiling)))
-            : (exr.setPattern || [0]).map(o => Math.max(1, Math.min(base + o, exr.repCeiling)));
-          exr.currentRepTarget = Math.max.apply(null, exr.setReps);
-          {
-            const next = computeNextStep(exr, loggedWeight, exr.currentRepTarget, exr.setReps.slice());
-            exr.currentWeight = next.weight;
-            if(next.setReps) exr.setReps = next.setReps;
-            exr.currentRepTarget = Math.max.apply(null, exr.setReps);
-          }
-        }
       } else if(!exr.stash && !alFallo){
         // Se calcula la progresión de todo lo que cumplió. Qué se aplica la
         // semana que viene lo deciden los interruptores (con el foco como preset).
