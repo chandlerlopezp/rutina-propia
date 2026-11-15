@@ -201,6 +201,22 @@
   .ex-skipped{opacity:.55;}
   .ex-skipped .exname{text-decoration:line-through;}
   .skip-btn{margin-left:6px;}
+  .skip-btn-h{padding:4px 10px;font-size:11px;}
+  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:90;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal-box{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:20px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;}
+  .cd-title{font-size:18px;margin-bottom:6px;}
+  .cd-help{font-size:13px;color:var(--ink-dim);margin:0 0 12px;}
+  .cd-help b{color:var(--ink);}
+  .cd-quick{display:flex;gap:6px;margin-bottom:10px;}
+  .cd-list{display:flex;flex-direction:column;gap:6px;}
+  .cd-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;}
+  .cd-name{font-size:13px;color:var(--ink);font-weight:600;}
+  .cd-name small{display:block;font-weight:400;font-size:11px;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;}
+  .cd-btns{display:flex;gap:6px;flex-shrink:0;}
+  .cd-no.sel, .cd-no.sel:hover{background:var(--rust-dim);border-color:var(--rust);color:var(--rust);font-weight:600;}
+  .cd-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;}
+  .cd-foot .primary:disabled{opacity:.45;cursor:default;}
+  @media (max-width:520px){ .cd-row{flex-direction:column;align-items:stretch;} .cd-btns{justify-content:flex-end;} }
   .up-hint{font-size:12px;color:var(--sage);background:var(--sage-dim);border:1px solid var(--sage);border-radius:6px;padding:7px 10px;margin-top:8px;}
   .rir-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
   .rir-lbl{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
@@ -1603,6 +1619,7 @@ function renderDays(){
             <span class="ex-did" id="did-${exr.id}">${hicisteTxt(draft, exr)}</span>
             <span class="ex-state">
               ${estancado ? '<span class="ex-stall">estancado</span>' : ''}
+              ${isClosed ? '' : `<button class="small skip-btn-h" onclick="event.stopPropagation(); toggleSkip('${exr.id}')">No lo hice</button>`}
               <button class="small done-btn ${cargado ? 'is-done' : ''}" id="done-${exr.id}" ${isClosed ? 'disabled' : ''}
                 onclick="event.stopPropagation(); toggleDone('${exr.id}')">${cargado ? '✓ Hecho' : 'Marcar hecho'}</button>
             </span>
@@ -1611,7 +1628,7 @@ function renderDays(){
         <div class="ex-body">
         <div class="ex-actions">
           <span class="acc-meta">${exSetsSummary(exr)}${modo==='series'?' · <span style="color:var(--blue);">series</span>':''}</span>
-          <span>${variantBtn} ${skipBtn}</span>
+          <span>${variantBtn}</span>
         </div>
         ${stallHtml(exr, isClosed)}
         ${rampFor(exr, wVal)}
@@ -1914,22 +1931,98 @@ function rerollWod(key){
 }
 
 // Cierra un día: congela lo cargado y aplica la progresión SOLO de ese día.
+// Cierra un día. Si quedaron ejercicios sin tocar, NO se asume que los hiciste:
+// se abre un panel donde elegís, ejercicio por ejercicio, si lo hiciste o no.
+// Los que marcás "No lo hice" no progresan ni suman a las estadísticas.
+let cierreDia = null;
+
 function closeDay(dayId){
   const day = state.days.find(d => d.id === dayId);
   if(!day) return;
-  const untouched = activeExercises(day).filter(e => e.type !== 'unregistered' && !state.draftLog[e.id]);
-  if(untouched.length > 0){
-    const ok = confirm(
-      `En este día hay ${untouched.length} ejercicio(s) donde no tocaste ningún valor:\n\n` +
-      untouched.map(e => '· ' + e.name).join('\n') +
-      '\n\nSi cerrás igual, se registran como si hubieras cumplido el objetivo exacto.\n\n' +
-      'Aceptar = cerrar igual · Cancelar = volver y completarlos'
-    );
-    if(!ok) return;
-  }
+  const sinTocar = activeExercises(day).filter(e => {
+    if(e.type === 'unregistered') return false;
+    const d = state.draftLog[e.id];
+    return !d;            // sin valores y sin marcar ni "hecho" ni "no lo hice"
+  });
+  if(sinTocar.length === 0){ cerrarDiaYa(dayId); return; }
+  cierreDia = { dayId, ids: sinTocar.map(e => e.id), marks: {} };
+  renderCierreDia();
+}
+
+function cerrarDiaYa(dayId){
   state.dayClosed[dayId] = true;
   saveState(true);
   renderDays();
+}
+
+function marcarCierre(id, v){
+  if(!cierreDia) return;
+  cierreDia.marks[id] = (cierreDia.marks[id] === v) ? null : v;
+  renderCierreDia();
+}
+
+function marcarTodosCierre(v){
+  if(!cierreDia) return;
+  cierreDia.ids.forEach(id => { cierreDia.marks[id] = v; });
+  renderCierreDia();
+}
+
+function cancelarCierreDia(){
+  cierreDia = null;
+  const m = document.getElementById('modalMount');
+  if(m) m.innerHTML = '';
+}
+
+function confirmarCierreDia(){
+  if(!cierreDia) return;
+  const cd = cierreDia;
+  if(cd.ids.some(id => !cd.marks[id])) return;
+  cd.ids.forEach(id => {
+    if(cd.marks[id] === 'no'){
+      const d = Object.assign({}, state.draftLog[id] || {}, { skipped: true });
+      delete d.auto;
+      state.draftLog[id] = d;
+    } else {
+      saveDraft(id);                       // registra el objetivo como cumplido
+      if(state.draftLog[id] && state.draftLog[id].weight == null) delete state.draftLog[id];
+    }
+  });
+  cancelarCierreDia();
+  cerrarDiaYa(cd.dayId);
+}
+
+function renderCierreDia(){
+  if(!cierreDia) return;
+  let m = document.getElementById('modalMount');
+  if(!m){ m = document.createElement('div'); m.id = 'modalMount'; document.body.appendChild(m); }
+  const day = state.days.find(d => d.id === cierreDia.dayId);
+  const filas = cierreDia.ids.map(id => {
+    const e = findExercise(id);
+    const mk = cierreDia.marks[id];
+    return `<div class="cd-row">
+      <span class="cd-name">${esc(e.name)}<small>objetivo ${fmtTarget(snapshotTargets(e), e)}</small></span>
+      <span class="cd-btns">
+        <button class="small ${mk === 'hecho' ? 'wt-on' : ''}" onclick="marcarCierre('${id}','hecho')">Lo hice</button>
+        <button class="small cd-no ${mk === 'no' ? 'sel' : ''}" onclick="marcarCierre('${id}','no')">No lo hice</button>
+      </span>
+    </div>`;
+  }).join('');
+  const faltan = cierreDia.ids.filter(id => !cierreDia.marks[id]).length;
+  m.innerHTML = `<div class="modal-back" onclick="cancelarCierreDia()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3 class="cd-title">Antes de cerrar el día ${dayPos(cierreDia.dayId)}</h3>
+      <p class="cd-help">No tocaste estos ejercicios. Decime cuáles hiciste: <b>los que marques "No lo hice" no progresan ni cuentan en las estadísticas</b>.</p>
+      <div class="cd-quick">
+        <button class="small" onclick="marcarTodosCierre('hecho')">Todos los hice</button>
+        <button class="small" onclick="marcarTodosCierre('no')">Ninguno</button>
+      </div>
+      <div class="cd-list">${filas}</div>
+      <div class="cd-foot">
+        <button class="small" onclick="cancelarCierreDia()">Volver</button>
+        <button class="primary" ${faltan ? 'disabled' : ''} onclick="confirmarCierreDia()">${faltan ? `Faltan ${faltan} por elegir` : 'Cerrar día'}</button>
+      </div>
+    </div>
+  </div>`;
 }
 
 function reopenDay(dayId){
