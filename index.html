@@ -202,6 +202,21 @@
   .ex-skipped .exname{text-decoration:line-through;}
   .skip-btn{margin-left:6px;}
   .skip-btn-h{padding:4px 10px;font-size:11px;}
+  .exhead > div:first-child{min-width:0;}
+  .ex-mid{display:flex;align-items:center;gap:6px;flex:1;justify-content:center;}
+  .ser-btn{display:inline-flex;align-items:center;gap:10px;padding:6px 12px;min-height:34px;font-size:12px;}
+  .ser-dots{font-family:'IBM Plex Mono',monospace;letter-spacing:2px;font-size:11px;color:var(--ink-faint);}
+  .ser-btn.is-part, .ser-btn.is-part:hover{border-color:var(--mustard);color:var(--mustard);}
+  .ser-btn.is-part .ser-dots{color:var(--mustard);}
+  .ser-btn.is-full, .ser-btn.is-full:hover{background:var(--sage);border-color:var(--sage);color:var(--bg);font-weight:600;}
+  .ser-btn.is-full .ser-dots{color:var(--bg);}
+  .ser-btn:disabled{opacity:.6;cursor:default;}
+  .ser-undo{padding:6px 11px;min-height:34px;}
+  @media (max-width:640px){
+    .ex-mid{order:3;flex-basis:100%;}
+    .ser-btn{flex:1;justify-content:space-between;min-height:42px;}
+    .ser-undo{min-height:42px;}
+  }
   .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:90;display:flex;align-items:center;justify-content:center;padding:16px;}
   .modal-box{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:20px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;}
   .cd-title{font-size:18px;margin-bottom:6px;}
@@ -1551,9 +1566,11 @@ function renderDays(){
         const objetivo = exr.setReps || [];
         const hechas = (draft.setReps && draft.setReps.length) ? draft.setReps : null;
         const celdas = Array.from({length:nS}, (_, i) => {
-          const v = hechas ? hechas[i] : objetivo[i];
+          // Sin nada cargado la casilla queda vacía (el objetivo va de placeholder):
+          // así el contador distingue lo que hiciste de lo que solo está sugerido.
+          const v = hechas ? hechas[i] : null;
           const meta = objetivo[i] != null ? `<span class="set-tgt">obj ${objetivo[i]}</span>` : '';
-          return `<label class="set-cell">Serie ${i+1}${meta}<input type="number" inputmode="numeric" id="r-${exr.id}-${i}" value="${v ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>`;
+          return `<label class="set-cell">Serie ${i+1}${meta}<input type="number" inputmode="numeric" id="r-${exr.id}-${i}" value="${v ?? ''}" placeholder="${objetivo[i] ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>`;
         }).join('');
         inputs = `<div class="log-box log-sets">
           <label class="log-peso">Peso (kg)<input type="number" step="0.5" inputmode="decimal" id="w-${exr.id}" value="${wVal ?? ''}" oninput="saveDraft('${exr.id}')"${dis}></label>
@@ -1606,7 +1623,7 @@ function renderDays(){
       const skipBtn = isClosed ? '' : `<button class="small skip-btn" onclick="toggleSkip('${exr.id}')">No lo hice</button>`;
       // Plegado: se ve nombre, objetivo y estado; al desplegar, todo lo demás.
       const abierto = (state.uiPrefs.openEx || []).includes(exr.id);
-      const cargado = draft && !draft.auto && draft.weight != null;
+      const cargado = filaCompleta(exr, draft);
       const estancado = (exr.stallWeeks || 0) >= STALL_LIMIT && !isClosed;
       return `<div class="exrow ex-fold ${abierto ? 'ex-open' : ''}" id="row-${exr.id}">
         <div class="exhead ex-toggle" onclick="toggleEx('${exr.id}')">
@@ -1614,6 +1631,7 @@ function renderDays(){
             <span class="exname"><span class="ex-chev">▸</span>${exr.name}</span>
             <span class="exmeta">${schemeText(exr)}${exr.scheme ? ' · ' + exr.scheme : ''}</span>
           </div>
+          ${contadorHtml(exr, draft, isClosed)}
           <span class="ex-right">
             ${targetText(exr)}
             <span class="ex-did" id="did-${exr.id}">${hicisteTxt(draft, exr)}</span>
@@ -1749,32 +1767,166 @@ function pintarHecho(id, hecho){
   b.textContent = hecho ? '✓ Hecho' : 'Marcar hecho';
 }
 
-// "Marcar hecho": registra lo que está en los campos (por defecto, el
-// objetivo) como cumplido, sin tener que tocar nada. Tocarlo de nuevo lo
-// desmarca y borra lo cargado en ese ejercicio.
-function toggleDone(id){
+// ---- Contador de series -------------------------------------------------
+// El contador se DERIVA de lo cargado: no guarda nada propio salvo en los
+// ejercicios por tiempo (draft.seriesDone), que tienen un solo campo.
+function diaDe(exId){
+  return state.days.find(d => d.exercises.some(e => e.id === exId)) || null;
+}
+
+function seriesCompletadas(exr, draft){
+  if(!exr || !draft || draft.auto || draft.skipped) return 0;
+  const n = seriesDe(exr);
+  if(exr.type === 'time') return Math.min(draft.seriesDone || 0, n);
+  if(!Array.isArray(draft.setReps)) return 0;
+  return Math.min(draft.setReps.filter(x => x != null).length, n);
+}
+
+// Fila hecha = todas las series con valor y peso definido.
+function filaCompleta(exr, draft){
+  if(!exr || !draft || draft.auto || draft.skipped || draft.weight == null) return false;
+  const n = seriesDe(exr);
+  return n > 0 && seriesCompletadas(exr, draft) >= n;
+}
+
+function contadorHtml(exr, draft, isClosed){
+  if(draft && draft.skipped) return '';
+  const n = seriesDe(exr);
+  if(!n) return '';
+  const k = seriesCompletadas(exr, draft);
+  const full = filaCompleta(exr, draft);
+  const dots = Array.from({length:n}, (_, i) => i < k ? '●' : '○').join('');
+  const label = full ? `✓ ${n}/${n}` : `Serie ${Math.min(k + 1, n)}/${n}`;
+  const cls = full ? 'is-full' : (k > 0 ? 'is-part' : '');
+  const undo = (k > 0 && !isClosed)
+    ? `<button class="small ser-undo" title="Deshacer la última serie" onclick="event.stopPropagation(); desmarcarSerie('${exr.id}')">−</button>` : '';
+  return `<span class="ex-mid" id="mid-${exr.id}">
+    <button class="small ser-btn ${cls}"${isClosed ? ' disabled' : ''} onclick="event.stopPropagation(); marcarSerie('${exr.id}')"><span class="ser-lbl">${label}</span><span class="ser-dots">${dots}</span></button>${undo}</span>`;
+}
+
+function refrescarContador(id){
+  const el = document.getElementById('mid-' + id);
+  const exr = findExercise(id);
+  if(!el || !exr) return;
+  const dia = diaDe(id);
+  el.outerHTML = contadorHtml(exr, state.draftLog[id], !!(dia && state.dayClosed[dia.id]));
+}
+
+function pesoDefinido(id){
+  const w = document.getElementById('w-' + id);
+  return !!w && w.value !== '' && !isNaN(parseFloat(w.value));
+}
+
+// Sin peso no hay nada que registrar: se abre la fila y se enfoca el campo.
+function pedirPeso(id){
+  const row = document.getElementById('row-' + id);
+  if(row && !row.classList.contains('ex-open')) toggleEx(id);
+  const inp = document.getElementById('w-' + id);
+  if(inp) inp.focus();
+  alert('Este ejercicio todavía no tiene peso definido: cargalo en el campo de peso.');
+}
+
+// Reps que se cargan al tocar el contador: el objetivo de esa serie (en una
+// semana de descarga, las reps que precargó la descarga).
+function repObjetivo(exr, draft, i){
+  if(draft && draft.auto && Array.isArray(draft.setReps) && draft.setReps[i] != null) return draft.setReps[i];
+  const o = exr.setReps && exr.setReps[i];
+  if(o != null) return o;
+  return exr.currentRepTarget != null ? exr.currentRepTarget : (exr.repFloor != null ? exr.repFloor : 1);
+}
+
+// Completa la serie siguiente con su objetivo.
+function avanzarSeries(exr){
+  const id = exr.id;
+  const prev = state.draftLog[id];
+  if(exr.type === 'time'){
+    saveDraft(id, { seriesDone: Math.min(seriesCompletadas(exr, prev) + 1, seriesDe(exr)) });
+    return;
+  }
+  const n = seriesDe(exr);
+  // Valores de una descarga automática no cuentan como hechos: se empieza de cero.
+  if(prev && prev.auto){
+    for(let i = 0; i < n; i++){ const el = document.getElementById('r-' + id + '-' + i); if(el) el.value = ''; }
+  }
+  for(let i = 0; i < n; i++){
+    const el = document.getElementById('r-' + id + '-' + i);
+    if(el && el.value === ''){ el.value = repObjetivo(exr, prev, i); break; }
+  }
+  saveDraft(id);
+}
+
+// Completa TODAS las series que falten con su objetivo (respeta lo corregido).
+function completarFila(id){
+  const exr = findExercise(id);
+  if(!exr) return;
+  const prev = state.draftLog[id];
+  if(exr.type === 'time'){ saveDraft(id, { seriesDone: seriesDe(exr) }); return; }
+  const n = seriesDe(exr);
+  for(let i = 0; i < n; i++){
+    const el = document.getElementById('r-' + id + '-' + i);
+    if(el && el.value === '') el.value = repObjetivo(exr, prev, i);
+  }
+  saveDraft(id);
+}
+
+function marcarSerie(id){
+  const exr = findExercise(id);
+  if(!exr) return;
+  const dia = diaDe(id);
+  if(dia && state.dayClosed[dia.id]) return;
   const d = state.draftLog[id];
-  if(d && !d.auto && d.weight != null){
+  if(d && d.skipped) return;
+  if(filaCompleta(exr, d)) return;          // completo: se deshace con el "−"
+  if(!pesoDefinido(id)){ pedirPeso(id); return; }
+  avanzarSeries(exr);
+  saveState();
+}
+
+function desmarcarSerie(id){
+  const exr = findExercise(id);
+  if(!exr) return;
+  const dia = diaDe(id);
+  if(dia && state.dayClosed[dia.id]) return;
+  const d = state.draftLog[id];
+  if(!d || d.skipped || seriesCompletadas(exr, d) === 0) return;
+  let quedan;
+  if(exr.type === 'time'){
+    quedan = d.seriesDone - 1;
+    saveDraft(id, { seriesDone: quedan });
+  } else {
+    const n = seriesDe(exr);
+    for(let i = n - 1; i >= 0; i--){
+      const el = document.getElementById('r-' + id + '-' + i);
+      if(el && el.value !== ''){ el.value = ''; break; }
+    }
+    saveDraft(id);
+    quedan = seriesCompletadas(exr, state.draftLog[id]);
+  }
+  // Sin series y sin nada propio cargado, la fila vuelve a "sin tocar".
+  const nd = state.draftLog[id];
+  if(quedan === 0 && nd && nd.rir == null && nd.weight === exr.currentWeight){
+    delete state.draftLog[id];
+    renderDays();
+  }
+  saveState();
+}
+
+// "Marcar hecho": completa las series que falten con su objetivo. Si ya está
+// completo, lo desmarca y borra lo cargado en ese ejercicio.
+function toggleDone(id){
+  const exr = findExercise(id);
+  if(!exr) return;
+  const d = state.draftLog[id];
+  if(filaCompleta(exr, d)){
     if(!confirm('¿Desmarcar este ejercicio? Se borran los valores cargados y vuelve al objetivo.')) return;
     delete state.draftLog[id];
     saveState();
     renderDays();
     return;
   }
-  saveDraft(id);
-  const nuevo = state.draftLog[id];
-  if(!nuevo || nuevo.weight == null){
-    // Ejercicio sin peso definido: hay que cargarlo a mano.
-    delete state.draftLog[id];
-    const row = document.getElementById('row-' + id);
-    if(row && !row.classList.contains('ex-open')) toggleEx(id);
-    const inp = document.getElementById('w-' + id);
-    if(inp) inp.focus();
-    alert('Este ejercicio todavía no tiene peso definido: cargalo en el campo de peso.');
-    return;
-  }
+  if(!pesoDefinido(id)){ pedirPeso(id); return; }
+  completarFila(id);
   saveState();
-  pintarHecho(id, true);
 }
 
 function moverHtml(id){
@@ -1944,6 +2096,14 @@ function closeDay(dayId){
     const d = state.draftLog[e.id];
     return !d;            // sin valores y sin marcar ni "hecho" ni "no lo hice"
   });
+  // Ejercicios a medias: las series sin hacer cuentan como 0 reps (no cumple, no progresa).
+  const aMedias = activeExercises(day).filter(e => {
+    const d = state.draftLog[e.id];
+    return d && !d.auto && !d.skipped && d.weight != null && !filaCompleta(e, d);
+  });
+  if(aMedias.length && !confirm(
+    'Tenés ejercicios a medias: ' + aMedias.map(e => e.name).join(', ') + '.\n\n' +
+    'Las series sin hacer cuentan como 0 reps: no cumplen y no progresan. ¿Cerrar igual?')) return;
   if(sinTocar.length === 0){ cerrarDiaYa(dayId); return; }
   cierreDia = { dayId, ids: sinTocar.map(e => e.id), marks: {} };
   renderCierreDia();
@@ -1983,7 +2143,7 @@ function confirmarCierreDia(){
       delete d.auto;
       state.draftLog[id] = d;
     } else {
-      saveDraft(id);                       // registra el objetivo como cumplido
+      completarFila(id);                   // registra el objetivo como cumplido
       if(state.draftLog[id] && state.draftLog[id].weight == null) delete state.draftLog[id];
     }
   });
@@ -2037,7 +2197,7 @@ function reopenDay(dayId){
 // tiraba ReferenceError en cada tecla y el valor solo se guardaba de rebote.)
 const draftSaveTimeouts = {};
 
-function saveDraft(exId){
+function saveDraft(exId, extra){
   const wInput = document.getElementById('w-'+exId);
   const weight = wInput && wInput.value !== '' ? parseFloat(wInput.value) : null;
   const setReps = [];
@@ -2052,10 +2212,13 @@ function saveDraft(exId){
   const prev = state.draftLog[exId] || {};
   state.draftLog[exId] = { weight, reps, setReps: setReps.length ? setReps : null,
                            rir: prev.rir != null ? prev.rir : null };
-  pintarHecho(exId, weight != null);
-  const did = document.getElementById('did-' + exId);
-  if(did) did.textContent = hicisteTxt(state.draftLog[exId], findExercise(exId));
+  if(prev.seriesDone != null) state.draftLog[exId].seriesDone = prev.seriesDone;
+  if(extra) Object.assign(state.draftLog[exId], extra);
   const exr = findExercise(exId);
+  pintarHecho(exId, filaCompleta(exr, state.draftLog[exId]));
+  refrescarContador(exId);
+  const did = document.getElementById('did-' + exId);
+  if(did) did.textContent = hicisteTxt(state.draftLog[exId], exr);
   const hint = document.getElementById('hint-' + exId);
   if(hint && exr){
     const sube = exr.type === 'weight' && exr.currentWeight != null && weight != null && weight > exr.currentWeight && !state.pendingDeload;
