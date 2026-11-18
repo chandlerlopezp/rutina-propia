@@ -243,6 +243,16 @@
   .rir-btn.wt-on{background:var(--mustard);color:var(--bg);border-color:var(--mustard);}
   .rir-btn.wt-on:hover{background:var(--mustard);color:var(--bg);}
   .rir-note{font-size:11px;color:var(--ink-faint);flex-basis:100%;}
+  .rir-tbl-wrap{overflow-x:auto;margin-top:14px;border:1px solid var(--line);border-radius:8px;}
+  .rir-tbl{border-collapse:collapse;width:100%;font-size:12px;}
+  .rir-tbl th, .rir-tbl td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;}
+  .rir-tbl th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;}
+  .rir-tbl td.rt-name{font-weight:600;color:var(--ink);position:sticky;left:0;background:var(--surface);}
+  .rir-tbl td.rt-cell{font-family:'IBM Plex Mono',monospace;color:var(--ink-dim);}
+  .rir-tbl td.rt-cell small{color:var(--ink-faint);font-size:10.5px;}
+  .rir-tbl .rt-r{font-weight:700;margin-left:4px;}
+  .rir-tbl .rt-r0{color:var(--rust);} .rir-tbl .rt-r1{color:var(--mustard);} .rir-tbl .rt-r2, .rir-tbl .rt-r3{color:var(--sage);} .rir-tbl .rt-r4{color:var(--blue);}
+  .rir-tbl .rt-deload{opacity:.6;}
   .stall{background:var(--rust-dim);border:1px solid var(--rust);border-radius:8px;padding:12px 14px;margin:0 0 10px;}
   .stall-head{font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--rust);margin-bottom:4px;}
   .stall p{font-size:12.5px;color:var(--ink-dim);margin:0 0 10px;}
@@ -284,6 +294,8 @@
 
   details.histrow{background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:2px 18px;}
   details.histrow summary{cursor:pointer;padding:14px 0;font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;}
+  .hist-wods{margin:4px 0 14px;}
+  details.histrow summary .badge-prog{font-family:'Inter',sans-serif;font-size:10.5px;background:var(--sage-dim);color:var(--sage);padding:2px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.03em;}
   details.histrow summary .badge-deload{font-family:'Inter',sans-serif;font-size:10.5px;background:var(--rust-dim);color:var(--rust);padding:2px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.03em;}
   .histtable{width:100%;border-collapse:collapse;margin-bottom:14px;}
   .histtable td{padding:7px 0;font-size:13px;color:var(--ink-dim);border-bottom:1px dashed var(--line);}
@@ -445,12 +457,8 @@
   </div>
 
   <div id="panel-historial" class="panel">
-    <div class="wod-section">
-      <h2 style="font-size:18px;margin-bottom:4px;">WODs realizados</h2>
-      <p class="chart-note" style="margin-bottom:16px;">Todos los finishers metabólicos que hiciste, semana a semana, más recientes primero.</p>
-      <div id="wodMount"></div>
-    </div>
-    <h2 style="font-size:18px;margin:32px 0 16px;">Historial de semanas</h2>
+    <h2 style="font-size:18px;margin:8px 0 4px;">Historial de semanas</h2>
+    <p class="chart-note" style="margin-bottom:16px;">Cada semana trae lo que hiciste de fuerza y los metabólicos (WODs) de esa misma semana. Más recientes primero.</p>
     <div id="histMount"></div>
   </div>
 
@@ -514,6 +522,14 @@
         <h3>Reps totales por semana</h3>
         <p class="chart-note">Suma de reps × series en toda la semana, sin ponderar por peso. Es un buen proxy de densidad/fatiga acumulada.</p>
         <canvas id="chartReps" height="110"></canvas>
+      </div>
+
+      <div class="chart-block">
+        <h3>RIR: señal de fatiga</h3>
+        <p class="chart-note">Promedio semanal del RIR que marcaste en la serie más dura (0 = no te quedaba nada, 4+ = sobrado). Si baja semana a semana y se queda cerca de 0, estás acumulando fatiga; si anda siempre en 3-4, los pesos te quedan livianos. Solo cuentan los ejercicios donde marcaste RIR.</p>
+        <canvas id="chartRir" height="110"></canvas>
+        <div id="rirEmpty" class="chart-note" style="display:none;">Todavía no hay RIR registrado: se marca dentro de cada ejercicio, abajo de las series.</div>
+        <div class="rir-tbl-wrap" id="rirTableWrap"></div>
       </div>
 
       <div class="chart-block">
@@ -2251,7 +2267,7 @@ function showMain(name, btn){
   document.getElementById('panel-rm').classList.toggle('active', name==='rm');
   state.uiPrefs.activeTab = name;
   saveLocalOnly();
-  if(name === 'historial'){ renderHistory(); renderWodHistory(); }
+  if(name === 'historial') renderHistory();
   if(name === 'estadisticas') renderStats();
   if(name === 'wods') renderWodLibrary();
   if(name === 'estructura') renderEstructura();
@@ -3441,38 +3457,37 @@ function importWods(event){
   event.target.value = '';
 }
 
-function renderWodHistory(){
-  const mount = document.getElementById('wodMount');
-  if(state.history.length === 0){
-    mount.innerHTML = `<p style="color:var(--ink-dim);font-size:14px;">Todavía no hay WODs registrados. Aparecen acá en cuanto cierres tu primera semana.</p>`;
-    return;
-  }
-  const rows = [];
-  state.history.slice().reverse().forEach(week => {
-    const st = week.finisherStatus || {};
-    [['day4','Metabólico 2','green'], ['day2','Metabólico 1','blue']].forEach(([key, label, color]) => {
-      const s = st[key] || {};
-      rows.push({
-        weekNumber: week.weekNumber, label, color,
-        text: (week.finishers[key] && week.finishers[key].text) || week.finishers[key],
-        done: s.done, note: s.note, result: s.result,
-        hasStatus: !!week.finisherStatus
-      });
-    });
-  });
-  mount.innerHTML = rows.map(r => {
-    const badge = !r.hasStatus ? ''
-      : (r.done ? '<span class="day-status done">Hecho</span>' : '<span class="day-status">No hecho</span>');
-    const marca = r.result ? `<span class="wod-mark" style="margin-top:6px;display:inline-block;">Marca: <b>${esc(r.result)}</b></span>` : '';
-    const note = r.note ? `<span class="wod-note">${esc(r.note)}</span>` : '';
-    return `
-    <div class="wod-row wod-${r.color}${r.hasStatus && !r.done ? ' wod-skipped' : ''}">
-      <div class="wod-tag">S${r.weekNumber}<br>${r.label}</div>
-      <p>${esc(r.text)}${note}<br>${marca}</p>
+// Los metabólicos de una semana, para mostrarlos dentro de esa semana del historial.
+function wodsSemanaHtml(week){
+  const st = week.finisherStatus || {};
+  const fin = week.finishers || {};
+  const hasStatus = !!week.finisherStatus;
+  const rows = [['day2','Metabólico 1','blue'], ['day4','Metabólico 2','green']].map(([key, label, color]) => {
+    const f = fin[key];
+    const text = (f && f.text) || (typeof f === 'string' ? f : '');
+    if(!text) return '';
+    const s2 = st[key] || {};
+    const badge = !hasStatus ? ''
+      : (s2.done ? '<span class="day-status done">Hecho</span>' : '<span class="day-status">No hecho</span>');
+    const marca = s2.result ? `<span class="wod-mark" style="margin-top:6px;display:inline-block;">Marca: <b>${esc(s2.result)}</b></span>` : '';
+    const note = s2.note ? `<span class="wod-note">${esc(s2.note)}</span>` : '';
+    return `<div class="wod-row wod-${color}${hasStatus && !s2.done ? ' wod-skipped' : ''}">
+      <div class="wod-tag">${label}</div>
+      <p>${esc(text)}${note}${marca ? '<br>' + marca : ''}</p>
       ${badge}
-    </div>
-  `;
+    </div>`;
   }).join('');
+  return rows ? `<div class="hist-wods"><p class="histfin" style="margin-bottom:8px;">Metabólicos de la semana</p>${rows}</div>` : '';
+}
+
+// Una semana "progresa" si no fue de descarga ni de adaptación y al menos un
+// ejercicio hecho tenía progresión activa. Las semanas viejas que no guardaron
+// ese dato cuentan como progresión si fueron normales.
+function semanaProgresa(week){
+  if(week.deload || week.adaptation) return false;
+  const hechos = Object.values(week.entries || {}).filter(e => e && !e.skipped && !e.notDone);
+  if(!hechos.some(e => 'prog' in e)) return true;
+  return hechos.some(e => e.prog === true);
 }
 
 function renderHistory(){
@@ -3499,10 +3514,11 @@ function renderHistory(){
       ? `<p class="histfin">Días entrenados: ${daysDone.length ? daysDone.map(n => nombreDia(week.structure, n)).join(', ') : 'ninguno'}${daysDone.length < (week.structure === 'tres' ? 3 : 4) ? ' · faltaron ' + ((week.structure === 'tres' ? 3 : 4) - daysDone.length) : ''}</p>`
       : '';
     return `<details class="histrow">
-      <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?`<span class="badge-deload">Descarga −${week.deloadPct || 15}%</span>`:(week.adaptation?'<span class="badge-adapt">Adaptación</span>':'')}</summary>
+      <summary><span>Semana ${week.weekNumber} — ${week.date}</span>${week.deload?`<span class="badge-deload">Descarga −${week.deloadPct || 15}%</span>`:(week.adaptation?'<span class="badge-adapt">Adaptación</span>':(semanaProgresa(week)?'<span class="badge-prog">Progresa</span>':''))}</summary>
       ${daysLabel}
       ${noHechosLabel}
       <table class="histtable">${rows}</table>
+      ${wodsSemanaHtml(week)}
     </details>`;
   }).join('');
 }
@@ -3579,7 +3595,11 @@ function computeStats(){
       const m = entry.muscle || 'Otro';
       muscleVolume[m] = (muscleVolume[m] || 0) + t.volume;
     });
-    return { weekNumber: week.weekNumber, deload: week.deload, totalVolume, totalReps, muscleVolume, entries: week.entries };
+    const rirs = Object.values(week.entries)
+      .filter(e => e && !e.skipped && !e.notDone && e.type !== 'time' && typeof e.rir === 'number')
+      .map(e => e.rir);
+    const rirAvg = rirs.length ? rirs.reduce((a, b) => a + b, 0) / rirs.length : null;
+    return { weekNumber: week.weekNumber, deload: week.deload, totalVolume, totalReps, muscleVolume, entries: week.entries, rirAvg, rirN: rirs.length };
   });
 
   const muscleGroups = Object.keys(MUSCLE_COLORS).filter(m => m !== 'Otro' &&
@@ -3668,6 +3688,32 @@ const CHART_BASE = {
   }
 };
 
+// Tabla peso / reps / RIR por ejercicio en las últimas semanas con RIR marcado.
+function rirTableHtml(stats){
+  const semanas = stats.perWeek.filter(w => w.rirN > 0).slice(-6);
+  if(!semanas.length) return '';
+  const ids = [];
+  const nombre = {};
+  semanas.forEach(w => Object.entries(w.entries).forEach(([id, e]) => {
+    if(!e || e.skipped || e.notDone || e.type === 'time' || typeof e.rir !== 'number') return;
+    if(!ids.includes(id)) ids.push(id);
+    nombre[id] = e.name || id;      // queda el nombre de la semana más reciente
+  }));
+  const head = semanas.map(w => `<th>S${w.weekNumber}${w.deload ? ' ↓' : ''}</th>`).join('');
+  const filas = ids.map(id => {
+    const celdas = semanas.map(w => {
+      const e = w.entries[id];
+      if(!e || e.skipped || e.notDone || e.weight == null) return '<td class="rt-cell">–</td>';
+      const reps = (e.setReps && e.setReps.length) ? e.setReps.map(x => x == null ? '–' : x).join('/') : (e.reps != null ? e.reps : '–');
+      const r = typeof e.rir === 'number'
+        ? `<span class="rt-r rt-r${Math.min(e.rir, 4)}">R${e.rir >= 4 ? '4+' : e.rir}</span>` : '<span class="rt-r">·</span>';
+      return `<td class="rt-cell${w.deload ? ' rt-deload' : ''}">${e.weight}<small>kg</small> ${esc(String(reps))}${r}</td>`;
+    }).join('');
+    return `<tr><td class="rt-name">${esc(nombre[id])}</td>${celdas}</tr>`;
+  }).join('');
+  return `<table class="rir-tbl"><thead><tr><th>Ejercicio</th>${head}</tr></thead><tbody>${filas}</tbody></table>`;
+}
+
 function renderStats(){
   if(typeof Chart === 'undefined'){
     document.getElementById('statsEmpty').style.display = 'none';
@@ -3744,6 +3790,21 @@ function renderStats(){
     options:{ plugins:{ legend:{ position:'bottom', labels:{ color:'#9CA0A6', font:{family:'Inter'} } } } }
   });
 
+  destroyChart('rirWeekly');
+  const hayRir = stats.perWeek.some(w => w.rirAvg != null);
+  document.getElementById('chartRir').style.display = hayRir ? 'block' : 'none';
+  document.getElementById('rirEmpty').style.display = hayRir ? 'none' : 'block';
+  document.getElementById('rirTableWrap').innerHTML = hayRir ? rirTableHtml(stats) : '';
+  if(hayRir){
+    charts.rirWeekly = new Chart(document.getElementById('chartRir'), {
+      type:'line',
+      data:{ labels, datasets:[{ label:'RIR promedio', data: stats.perWeek.map(w => w.rirAvg == null ? null : Math.round(w.rirAvg * 10) / 10),
+        borderColor:'#22C55E', backgroundColor:'rgba(34,197,94,0.12)', fill:true, tension:0.3, spanGaps:true,
+        pointBackgroundColor: stats.perWeek.map(w => w.deload ? '#E5484D' : '#22C55E') }] },
+      options:{ ...CHART_BASE, scales:{ ...CHART_BASE.scales, y:{ ...CHART_BASE.scales.y, min:0, max:4 } } }
+    });
+  }
+
   destroyChart('deloadTimeline');
   charts.deloadTimeline = new Chart(document.getElementById('chartDeloadTimeline'), {
     type:'bar',
@@ -3767,7 +3828,7 @@ function render(){
   document.getElementById('weeknum').textContent = state.weekNumber;
   renderDeloadBanner();
   renderDays();
-  if(document.getElementById('panel-historial').classList.contains('active')){ renderHistory(); renderWodHistory(); }
+  if(document.getElementById('panel-historial').classList.contains('active')) renderHistory();
   if(document.getElementById('panel-estadisticas').classList.contains('active')) renderStats();
 }
 
