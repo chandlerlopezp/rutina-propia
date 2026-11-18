@@ -1812,7 +1812,7 @@ function contadorHtml(exr, draft, isClosed){
   const k = seriesCompletadas(exr, draft);
   const full = filaCompleta(exr, draft);
   const dots = Array.from({length:n}, (_, i) => i < k ? '●' : '○').join('');
-  const label = full ? `✓ ${n}/${n}` : `Serie ${Math.min(k + 1, n)}/${n}`;
+  const label = full ? `✓ ${n}/${n}` : `Serie ${k}/${n}`;
   const cls = full ? 'is-full' : (k > 0 ? 'is-part' : '');
   const undo = (k > 0 && !isClosed)
     ? `<button class="small ser-undo" title="Deshacer la última serie" onclick="event.stopPropagation(); desmarcarSerie('${exr.id}')">−</button>` : '';
